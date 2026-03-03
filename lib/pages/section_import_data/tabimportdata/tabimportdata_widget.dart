@@ -37,7 +37,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   bool _isSubmitting = false;
 
   final ForecastApiService _apiService = ForecastApiService(
-    baseUrl: 'https://demand-forecast-api-1072203670086.europe-west1.run.app',
+    baseUrl: 'https://demand-forecast-flask-1072203670086.europe-west1.run.app',
   );
 
   @override
