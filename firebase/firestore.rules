@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{document} {
+      allow create: if request.auth.uid == request.resource.data.email;
+      allow read: if request.auth.uid == resource.data.email;
+      allow write: if request.auth.uid == resource.data.email;
+      allow delete: if false;
+    }
+
+    match /products/{document} {
+      allow create: if request.auth.uid == request.resource.data.product_id;
+      allow read: if request.auth.uid == resource.data.product_id;
+      allow write: if request.auth.uid == resource.data.product_id;
+      allow delete: if false;
+    }
+
+    match /onhold_users/{document} {
+      allow create: if request.auth.uid == request.resource.data.email;
+      allow read: if request.auth.uid == resource.data.email;
+      allow write: if request.auth.uid == resource.data.email;
+      allow delete: if false;
+    }
+
+    match /demo/{document} {
+      allow create: if false;
+      allow read: if true;
+      allow write: if false;
+      allow delete: if false;
+    }
+
+    match /userspro/{document} {
+      allow create: if request.auth.uid == request.resource.data.display_name;
+      allow read: if request.auth.uid == resource.data.display_name;
+      allow write: if request.auth.uid == resource.data.display_name;
+      allow delete: if false;
+    }
+
+    match /productspro/{document} {
+      allow create: if request.auth.uid == request.resource.data.name;
+      allow read: if request.auth.uid == resource.data.name;
+      allow write: if false;
+      allow delete: if false;
+    }
+  }
+}
