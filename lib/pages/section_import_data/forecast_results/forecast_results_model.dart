@@ -1,8 +1,8 @@
 import '/flutter_flow/flutter_flow_util.dart';
-import 'tabimportdata_widget.dart' show TabimportdataWidget;
+import 'forecast_results_widget.dart' show ForecastResultsWidget;
 import 'package:flutter/material.dart';
 
-class TabimportdataModel extends FlutterFlowModel<TabimportdataWidget> {
+class ForecastResultsModel extends FlutterFlowModel<ForecastResultsWidget> {
   @override
   void initState(BuildContext context) {}
 

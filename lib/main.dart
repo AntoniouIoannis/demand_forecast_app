@@ -160,7 +160,7 @@ class _NavBarPageState extends State<NavBarPage> {
       'Auth2': Auth2Widget(),
       'subscript': SubscriptWidget(),
       'AboutApp': AboutAppWidget(),
-      'importData': ImportDataWidget(),
+      'importData': TabimportdataWidget(),
       'HomePage': HomePageWidget(),
     };
     final currentIndex = tabs.keys.toList().indexOf(_currentPageName);

@@ -73,18 +73,16 @@ class AppStateNotifier extends ChangeNotifier {
 }
 
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-      initialLocation: '/',
+      initialLocation: '/tabimportdata',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) =>
-          appStateNotifier.loggedIn ? NavBarPage() : HomePageWidget(),
+      errorBuilder: (context, state) => TabimportdataWidget(),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) =>
-              appStateNotifier.loggedIn ? NavBarPage() : HomePageWidget(),
+          builder: (context, _) => TabimportdataWidget(),
           routes: [
             FFRoute(
               name: Auth2Widget.routeName,
@@ -132,12 +130,26 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               path: ImportDataWidget.routePath,
               builder: (context, params) => params.isEmpty
                   ? NavBarPage(initialPage: 'importData')
-                  : ImportDataWidget(),
+                  : TabimportdataWidget(),
             ),
             FFRoute(
               name: TabimportdataWidget.routeName,
               path: TabimportdataWidget.routePath,
               builder: (context, params) => TabimportdataWidget(),
+            ),
+            FFRoute(
+              name: ForecastResultsWidget.routeName,
+              path: ForecastResultsWidget.routePath,
+              builder: (context, params) => ForecastResultsWidget(
+                initialResults: params.getParam<List<dynamic>>(
+                  'results',
+                  ParamType.JSON,
+                ),
+                sourceLabel: params.getParam<String>(
+                  'sourceLabel',
+                  ParamType.String,
+                ),
+              ),
             ),
             FFRoute(
               name: FeedWidget.routeName,
