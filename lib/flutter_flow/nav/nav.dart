@@ -156,6 +156,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                   'sourceLabel',
                   ParamType.String,
                 ),
+                debugMode: params.getParam<bool>(
+                      'debugMode',
+                      ParamType.bool,
+                    ) ??
+                    false,
               ),
             ),
             FFRoute(
@@ -171,6 +176,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
                   'sourceLabel',
                   ParamType.String,
                 ),
+                debugMode: params.getParam<bool>(
+                      'debugMode',
+                      ParamType.bool,
+                    ) ??
+                    false,
               ),
             ),
             FFRoute(

@@ -16,6 +16,7 @@ class ForecastResultsWidget extends StatefulWidget {
     super.key,
     this.initialResults,
     this.sourceLabel,
+    this.debugMode = false,
   });
 
   static String routeName = 'forecastResults';
@@ -23,6 +24,7 @@ class ForecastResultsWidget extends StatefulWidget {
 
   final List<dynamic>? initialResults;
   final String? sourceLabel;
+  final bool debugMode;
 
   @override
   State<ForecastResultsWidget> createState() => _ForecastResultsWidgetState();
@@ -32,6 +34,7 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
   late ForecastResultsModel _model;
   late final List<ForecastRecord> _results;
   bool _isPreparingResults = true;
+  final List<String> _debugEvents = <String>[];
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -45,14 +48,54 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
         .map((item) => ForecastRecord.fromMap(Map<String, dynamic>.from(item)))
         .toList(growable: false);
 
+    if (widget.debugMode) {
+      _debugEvents.add('[init] Results page opened with ${_results.length} rows.');
+      _debugEvents.add('[init] Waiting for chart and table rendering.');
+    }
+
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) {
         return;
       }
       safeSetState(() {
         _isPreparingResults = false;
+        if (widget.debugMode) {
+          _debugEvents.add('[ready] Chart and data sheet rendered.');
+        }
       });
     });
+  }
+
+  Widget _buildDebugPanel() {
+    if (!widget.debugMode) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 16.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFDADCE0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Results debug trace', style: FlutterFlowTheme.of(context).titleSmall),
+            const SizedBox(height: 8.0),
+            ..._debugEvents.map(
+              (event) => Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Text(event, style: FlutterFlowTheme.of(context).bodySmall),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -140,6 +183,7 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
                 : 'Forecast generated successfully',
             style: FlutterFlowTheme.of(context).bodyMedium,
           ),
+          _buildDebugPanel(),
           const SizedBox(height: 16.0),
           Container(
             width: double.infinity,

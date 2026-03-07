@@ -39,6 +39,8 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   };
 
   bool _isSubmitting = false;
+  bool _debugMode = true;
+  final List<String> _debugLogs = <String>[];
 
   @override
   void initState() {
@@ -60,6 +62,39 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   String get _supportedExtensionsLabel =>
       _allowedExtensions.map((extension) => '.$extension').join(', ');
 
+  String _timestamp() => DateTime.now().toIso8601String().substring(11, 19);
+
+  void _appendDebugLog(String message) {
+    if (!mounted) {
+      return;
+    }
+    safeSetState(() {
+      _debugLogs.add('[${_timestamp()}] $message');
+    });
+  }
+
+  Future<void> _debugCheckpoint(String title, String message) async {
+    _appendDebugLog('$title: $message');
+    if (!_debugMode || !mounted) {
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _pickFileForYear(String year) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -75,12 +110,14 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     safeSetState(() {
       _filesByYear[year] = result.files.first;
     });
+    _appendDebugLog('File selected for $year: ${result.files.first.name}');
   }
 
   void _clearFileForYear(String year) {
     safeSetState(() {
       _filesByYear[year] = null;
     });
+    _appendDebugLog('File cleared for $year');
   }
 
   Future<void> _submitForecast() async {
@@ -91,21 +128,25 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     safeSetState(() {
       _isSubmitting = true;
     });
+    _appendDebugLog('Start Forecast Processing clicked');
 
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw const FormatException('Πρέπει να κάνεις sign in πριν το upload.');
       }
+      await _debugCheckpoint('Auth OK', 'Authenticated user: ${user.uid}');
       final userId = user.uid;
       final uploadId = const Uuid().v4();
+      await _debugCheckpoint('Upload ID Created', 'uploadId = $uploadId');
 
       final storage = FirebaseStorage.instance;
-        final selectedOrder = ['2017', '2018', '2019'];
-        final selectedEntries = _filesByYear.entries
+      final selectedOrder = ['2017', '2018', '2019'];
+      final selectedEntries = _filesByYear.entries
           .where((entry) => entry.value?.bytes != null)
           .toList(growable: false);
-        final fallbackFile = selectedEntries.isNotEmpty ? selectedEntries.first.value : null;
+      final fallbackFile =
+          selectedEntries.isNotEmpty ? selectedEntries.first.value : null;
 
       int filesUploaded = 0;
       final uploadedFiles = <Map<String, dynamic>>[];
@@ -118,9 +159,19 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
       if (fallbackFile == null || fallbackFile.bytes == null) {
         throw const FormatException('Please select at least one Excel file.');
       }
+      await _debugCheckpoint(
+        'Input Files Ready',
+        'Selected files: ${selectedNames.join(', ')}',
+      );
 
       for (final year in selectedOrder) {
         final selected = _filesByYear[year] ?? fallbackFile;
+        await _debugCheckpoint(
+          'Prepare File $year',
+          _filesByYear[year] == null
+              ? 'No file selected for $year. Reusing ${selected.name} for demo.'
+              : 'Using ${selected.name} for $year.',
+        );
         final mappedFile = _prepareMappedFile(year, selected);
 
         final filePath = 'staging/$userId/$uploadId/${mappedFile.fileName}';
@@ -140,6 +191,10 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
 
         await ref.putData(Uint8List.fromList(mappedFile.bytes), metadata);
         filesUploaded++;
+        await _debugCheckpoint(
+          'Upload Success',
+          'Uploaded ${mappedFile.fileName} to $filePath',
+        );
         uploadedFiles.add({
           'year': year,
           'originalName': selected.name,
@@ -170,13 +225,19 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           },
         ),
       );
+      await _debugCheckpoint(
+        'READY.json Uploaded',
+        'Forecast trigger file uploaded successfully. filesUploaded=$filesUploaded',
+      );
 
       if (mounted) {
+        _appendDebugLog('Opening Forecast Processing page');
         context.pushNamed(
           ForecastProcessingWidget.routeName,
           extra: {
             'uploadId': uploadId,
             'sourceLabel': selectedNames.join(', '),
+            'debugMode': _debugMode,
           },
         );
 
@@ -185,6 +246,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         });
       }
     } on FormatException catch (e) {
+      _appendDebugLog('FormatException: ${e.message}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message), backgroundColor: Colors.orange),
@@ -194,6 +256,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         }
       }
     } catch (e) {
+      _appendDebugLog('Unhandled error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -407,6 +470,76 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     );
   }
 
+  Widget _buildDebugCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFDADCE0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Debug trace',
+                    style: FlutterFlowTheme.of(context).titleSmall,
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _debugMode,
+                  onChanged: _isSubmitting
+                      ? null
+                      : (value) {
+                          safeSetState(() {
+                            _debugMode = value;
+                          });
+                        },
+                ),
+              ],
+            ),
+            Text(
+              _debugMode
+                  ? 'Live checkpoints are enabled. An OK dialog will appear at key steps.'
+                  : 'Live checkpoints are disabled. Trace messages still appear here.',
+              style: FlutterFlowTheme.of(context).bodySmall,
+            ),
+            if (_debugLogs.isNotEmpty) ...[
+              const SizedBox(height: 10.0),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 160.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: _debugLogs
+                        .map(
+                          (log) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4.0),
+                            child: Text(
+                              log,
+                              style: GoogleFonts.robotoMono(
+                                fontSize: 11.0,
+                                color: FlutterFlowTheme.of(context).primaryText,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _fileCard(String year) {
     final selectedFile = _filesByYear[year];
 
@@ -569,7 +702,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,6 +744,8 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                     );
                   },
                 ),
+                const SizedBox(height: 12.0),
+                _buildDebugCard(),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
                   child: _isSubmitting
@@ -642,7 +777,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                 _fileCard('2018'),
                 const SizedBox(height: 12.0),
                 _fileCard('2019'),
-                const Spacer(),
+                const SizedBox(height: 16.0),
                 FFButtonWidget(
                   onPressed: (_hasAtLeastOneFileSelected && !_isSubmitting)
                       ? () async {

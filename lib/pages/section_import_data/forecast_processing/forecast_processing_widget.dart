@@ -1,6 +1,7 @@
 import '/backend/forecast/forecast_models.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ class ForecastProcessingWidget extends StatefulWidget {
     super.key,
     this.uploadId,
     this.sourceLabel,
+    this.debugMode = false,
   });
 
   static String routeName = 'forecastProcessing';
@@ -18,6 +20,7 @@ class ForecastProcessingWidget extends StatefulWidget {
 
   final String? uploadId;
   final String? sourceLabel;
+  final bool debugMode;
 
   @override
   State<ForecastProcessingWidget> createState() =>
@@ -27,6 +30,25 @@ class ForecastProcessingWidget extends StatefulWidget {
 class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   bool _hasNavigatedToResults = false;
+  final List<String> _debugEvents = <String>[];
+  String? _lastDebugEvent;
+
+  String _timestamp() => DateTime.now().toIso8601String().substring(11, 19);
+
+  void _recordDebugEvent(String message) {
+    if (_lastDebugEvent == message) {
+      return;
+    }
+    _lastDebugEvent = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      safeSetState(() {
+        _debugEvents.add('[${_timestamp()}] $message');
+      });
+    });
+  }
 
   void _openResults(List<ForecastRecord> results, String? sourceLabel) {
     if (_hasNavigatedToResults || !mounted) {
@@ -44,14 +66,90 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
         extra: {
           'results': results.map((entry) => entry.toMap()).toList(growable: false),
           'sourceLabel': sourceLabel,
+          'debugMode': widget.debugMode,
         },
       );
     });
   }
 
+  Widget _buildDebugPanel({VoidCallback? onContinue}) {
+    if (!widget.debugMode) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 24.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F7F7),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFDADCE0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Live debug trace',
+              style: FlutterFlowTheme.of(context).titleSmall,
+            ),
+            const SizedBox(height: 8.0),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 180.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _debugEvents
+                      .map(
+                        (event) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text(event, style: FlutterFlowTheme.of(context).bodySmall),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+            if (onContinue != null) ...[
+              const SizedBox(height: 12.0),
+              FFButtonWidget(
+                onPressed: onContinue,
+                text: 'OK - Continue',
+                options: FFButtonOptions(
+                  width: double.infinity,
+                  height: 44.0,
+                  color: FlutterFlowTheme.of(context).secondary,
+                  textStyle: FlutterFlowTheme.of(context).bodyMedium.override(
+                        font: GoogleFonts.inter(
+                          fontWeight: FlutterFlowTheme.of(context)
+                              .bodyMedium
+                              .fontWeight,
+                          fontStyle: FlutterFlowTheme.of(context)
+                              .bodyMedium
+                              .fontStyle,
+                        ),
+                        color: FlutterFlowTheme.of(context).info,
+                        letterSpacing: 0.0,
+                        fontWeight:
+                            FlutterFlowTheme.of(context).bodyMedium.fontWeight,
+                        fontStyle:
+                            FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+                      ),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProcessingBody({
     required String title,
     required String subtitle,
+    VoidCallback? onContinue,
   }) {
     return Center(
       child: Padding(
@@ -90,6 +188,7 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
               style: FlutterFlowTheme.of(context).bodyLarge,
               textAlign: TextAlign.center,
             ),
+            _buildDebugPanel(onContinue: onContinue),
           ],
         ),
       ),
@@ -172,12 +271,14 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
+                      _recordDebugEvent('Firestore snapshot error: ${snapshot.error}');
                       return _buildFailedBody(
                         'Error while reading processing status: ${snapshot.error}',
                       );
                     }
 
                     if (!snapshot.hasData || !snapshot.data!.exists) {
+                      _recordDebugEvent('Waiting for forecasts/${widget.uploadId} document');
                       return _buildProcessingBody(
                         title: 'Processing forecast in Cloud Run...',
                         subtitle: widget.sourceLabel?.isNotEmpty == true
@@ -192,8 +293,12 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                     final effectiveSource = (widget.sourceLabel?.isNotEmpty == true)
                         ? widget.sourceLabel
                         : data['source']?.toString();
+                    _recordDebugEvent('Firestore document received. status=$status');
 
                     if (status == 'failed') {
+                      _recordDebugEvent(
+                        'Backend reported failure: ${data['error']?.toString() ?? 'Unknown backend error.'}',
+                      );
                       return _buildFailedBody(
                         data['error']?.toString() ?? 'Unknown backend error.',
                       );
@@ -210,10 +315,18 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                         : const <ForecastRecord>[];
 
                     if (status == 'completed' && parsedResults.isNotEmpty) {
-                      _openResults(parsedResults, effectiveSource);
+                      _recordDebugEvent(
+                        'Results ready. ${parsedResults.length} rows received from Firestore.',
+                      );
+                      if (!widget.debugMode) {
+                        _openResults(parsedResults, effectiveSource);
+                      }
                       return _buildProcessingBody(
                         title: 'Forecast completed',
                         subtitle: 'Preparing the results page...',
+                        onContinue: widget.debugMode
+                            ? () => _openResults(parsedResults, effectiveSource)
+                            : null,
                       );
                     }
 
