@@ -4,6 +4,7 @@ import '/backend/forecast/forecast_models.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,6 +15,7 @@ export 'forecast_results_model.dart';
 class ForecastResultsWidget extends StatefulWidget {
   const ForecastResultsWidget({
     super.key,
+    this.uploadId,
     this.initialResults,
     this.sourceLabel,
   });
@@ -21,6 +23,7 @@ class ForecastResultsWidget extends StatefulWidget {
   static String routeName = 'forecastResults';
   static String routePath = 'forecastResults';
 
+  final String? uploadId;
   final List<dynamic>? initialResults;
   final String? sourceLabel;
 
@@ -30,7 +33,7 @@ class ForecastResultsWidget extends StatefulWidget {
 
 class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
   late ForecastResultsModel _model;
-  late final List<ForecastRecord> _results;
+  late final List<ForecastRecord> _fallbackResults;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -39,7 +42,7 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
     super.initState();
     _model = createModel(context, () => ForecastResultsModel());
 
-    _results = (widget.initialResults ?? const [])
+    _fallbackResults = (widget.initialResults ?? const [])
         .whereType<Map>()
         .map((item) => ForecastRecord.fromMap(Map<String, dynamic>.from(item)))
         .toList(growable: false);
@@ -53,9 +56,9 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
     super.dispose();
   }
 
-  Future<void> _downloadCsv() async {
+  Future<void> _downloadCsv(List<ForecastRecord> rows) async {
     final buffer = StringBuffer('product_id,month_year,forecast_qty\n');
-    for (final row in _results) {
+    for (final row in rows) {
       buffer.writeln('${row.productId},${row.monthYear},${row.forecastQty}');
     }
 
@@ -73,10 +76,74 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildProcessingView(String? sourceLabel) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Processing forecast in Cloud Run...',
+              style: FlutterFlowTheme.of(context).titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              sourceLabel?.isNotEmpty == true
+                  ? 'Source: $sourceLabel'
+                  : 'Waiting for backend results',
+              style: FlutterFlowTheme.of(context).bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFailedView(String errorMessage) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 44,
+              color: FlutterFlowTheme.of(context).error,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Forecast processing failed',
+              style: FlutterFlowTheme.of(context).titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMessage,
+              style: FlutterFlowTheme.of(context).bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResultsContent({
+    required List<ForecastRecord> results,
+    String? sourceLabel,
+  }) {
     final monthlyTotals = <String, double>{};
-    for (final row in _results) {
+    for (final row in results) {
       monthlyTotals[row.monthYear] =
           (monthlyTotals[row.monthYear] ?? 0) + row.forecastQty;
     }
@@ -89,6 +156,196 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
             FlSpot(entry.key.toDouble(), monthlyTotals[entry.value] ?? 0))
         .toList(growable: false);
 
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            sourceLabel?.isNotEmpty == true
+                ? 'Source: $sourceLabel'
+                : 'Forecast generated successfully',
+            style: FlutterFlowTheme.of(context).bodyMedium,
+          ),
+          const SizedBox(height: 16.0),
+          Container(
+            width: double.infinity,
+            height: 240.0,
+            decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).secondaryBackground,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: lineSpots.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No chart data available.',
+                        style: FlutterFlowTheme.of(context).bodyMedium,
+                      ),
+                    )
+                  : LineChart(
+                      LineChartData(
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: null,
+                          getDrawingHorizontalLine: (_) => FlLine(
+                            color: FlutterFlowTheme.of(context).alternate,
+                            strokeWidth: 1.0,
+                          ),
+                        ),
+                        titlesData: FlTitlesData(
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 48.0,
+                              getTitlesWidget: (value, meta) => Text(
+                                value.toStringAsFixed(0),
+                                style: FlutterFlowTheme.of(context).bodySmall,
+                              ),
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 28.0,
+                              getTitlesWidget: (value, meta) {
+                                final index = value.toInt();
+                                if (index < 0 || index >= sortedMonths.length) {
+                                  return const SizedBox.shrink();
+                                }
+                                final monthLabel = sortedMonths[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 6.0),
+                                  child: Text(
+                                    monthLabel.length >= 7
+                                        ? monthLabel.substring(0, 7)
+                                        : monthLabel,
+                                    style:
+                                        FlutterFlowTheme.of(context).bodySmall,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        borderData: FlBorderData(
+                          show: true,
+                          border: Border.all(
+                            color: FlutterFlowTheme.of(context).alternate,
+                          ),
+                        ),
+                        minX: 0,
+                        maxX: (lineSpots.length - 1).toDouble(),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: lineSpots,
+                            isCurved: true,
+                            color: FlutterFlowTheme.of(context).primary,
+                            barWidth: 3.0,
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (_, __, ___, ____) =>
+                                  FlDotCirclePainter(
+                                radius: 3.0,
+                                color: FlutterFlowTheme.of(context).primary,
+                                strokeColor: FlutterFlowTheme.of(context)
+                                    .secondaryBackground,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 16.0),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: FlutterFlowTheme.of(context).secondaryBackground,
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  child: DataTable(
+                    headingTextStyle: FlutterFlowTheme.of(context).labelLarge,
+                    dataTextStyle: FlutterFlowTheme.of(context).bodyMedium,
+                    columns: const [
+                      DataColumn(label: Text('Product ID')),
+                      DataColumn(label: Text('Month')),
+                      DataColumn(label: Text('Forecast Qty')),
+                    ],
+                    rows: results
+                        .map(
+                          (row) => DataRow(
+                            cells: [
+                              DataCell(Text(row.productId)),
+                              DataCell(Text(row.monthYear)),
+                              DataCell(
+                                  Text(row.forecastQty.toStringAsFixed(2))),
+                            ],
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16.0),
+          Row(
+            children: [
+              Expanded(
+                child: FFButtonWidget(
+                  onPressed: () => _downloadCsv(results),
+                  text: 'Download CSV',
+                  options: FFButtonOptions(
+                    height: 48.0,
+                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                    iconPadding:
+                        const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                    color: FlutterFlowTheme.of(context).primary,
+                    textStyle: FlutterFlowTheme.of(context).titleSmall.override(
+                          font: GoogleFonts.inter(
+                            fontWeight: FlutterFlowTheme.of(context)
+                                .titleSmall
+                                .fontWeight,
+                            fontStyle: FlutterFlowTheme.of(context)
+                                .titleSmall
+                                .fontStyle,
+                          ),
+                          color: FlutterFlowTheme.of(context).info,
+                          letterSpacing: 0.0,
+                          fontWeight: FlutterFlowTheme.of(context)
+                              .titleSmall
+                              .fontWeight,
+                          fontStyle:
+                              FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                        ),
+                    elevation: 2.0,
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -122,204 +379,68 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: _results.isEmpty
-              ? Center(
-                  child: Text(
-                    'No forecast data available.',
-                    style: FlutterFlowTheme.of(context).bodyLarge,
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.sourceLabel?.isNotEmpty == true
-                            ? 'Source: ${widget.sourceLabel}'
-                            : 'Forecast generated successfully',
-                        style: FlutterFlowTheme.of(context).bodyMedium,
+          child: widget.uploadId == null || widget.uploadId!.isEmpty
+              ? (_fallbackResults.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No forecast request found.',
+                        style: FlutterFlowTheme.of(context).bodyLarge,
                       ),
-                      const SizedBox(height: 16.0),
-                      Container(
-                        width: double.infinity,
-                        height: 240.0,
-                        decoration: BoxDecoration(
-                          color:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: LineChart(
-                            LineChartData(
-                              gridData: FlGridData(
-                                show: true,
-                                drawVerticalLine: false,
-                                horizontalInterval: null,
-                                getDrawingHorizontalLine: (_) => FlLine(
-                                  color: FlutterFlowTheme.of(context).alternate,
-                                  strokeWidth: 1.0,
-                                ),
-                              ),
-                              titlesData: FlTitlesData(
-                                rightTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                topTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                leftTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 48.0,
-                                    getTitlesWidget: (value, meta) => Text(
-                                      value.toStringAsFixed(0),
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodySmall,
-                                    ),
-                                  ),
-                                ),
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 28.0,
-                                    getTitlesWidget: (value, meta) {
-                                      final index = value.toInt();
-                                      if (index < 0 ||
-                                          index >= sortedMonths.length) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      final monthLabel = sortedMonths[index];
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 6.0),
-                                        child: Text(
-                                          monthLabel.length >= 7
-                                              ? monthLabel.substring(0, 7)
-                                              : monthLabel,
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodySmall,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                              borderData: FlBorderData(
-                                show: true,
-                                border: Border.all(
-                                  color: FlutterFlowTheme.of(context).alternate,
-                                ),
-                              ),
-                              minX: 0,
-                              maxX: (lineSpots.length - 1).toDouble(),
-                              lineBarsData: [
-                                LineChartBarData(
-                                  spots: lineSpots,
-                                  isCurved: true,
-                                  color: FlutterFlowTheme.of(context).primary,
-                                  barWidth: 3.0,
-                                  dotData: FlDotData(
-                                    show: true,
-                                    getDotPainter: (_, __, ___, ____) =>
-                                        FlDotCirclePainter(
-                                      radius: 3.0,
-                                      color:
-                                          FlutterFlowTheme.of(context).primary,
-                                      strokeColor: FlutterFlowTheme.of(context)
-                                          .secondaryBackground,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16.0),
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SingleChildScrollView(
-                              child: DataTable(
-                                headingTextStyle:
-                                    FlutterFlowTheme.of(context).labelLarge,
-                                dataTextStyle:
-                                    FlutterFlowTheme.of(context).bodyMedium,
-                                columns: const [
-                                  DataColumn(label: Text('Product ID')),
-                                  DataColumn(label: Text('Month')),
-                                  DataColumn(label: Text('Forecast Qty')),
-                                ],
-                                rows: _results
-                                    .map(
-                                      (row) => DataRow(
-                                        cells: [
-                                          DataCell(Text(row.productId)),
-                                          DataCell(Text(row.monthYear)),
-                                          DataCell(Text(row.forecastQty
-                                              .toStringAsFixed(2))),
-                                        ],
-                                      ),
-                                    )
-                                    .toList(growable: false),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16.0),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FFButtonWidget(
-                              onPressed: _downloadCsv,
-                              text: 'Download CSV',
-                              options: FFButtonOptions(
-                                height: 48.0,
-                                padding: const EdgeInsetsDirectional.fromSTEB(
-                                    0, 0, 0, 0),
-                                iconPadding:
-                                    const EdgeInsetsDirectional.fromSTEB(
-                                        0, 0, 0, 0),
-                                color: FlutterFlowTheme.of(context).primary,
-                                textStyle: FlutterFlowTheme.of(context)
-                                    .titleSmall
-                                    .override(
-                                      font: GoogleFonts.inter(
-                                        fontWeight: FlutterFlowTheme.of(context)
-                                            .titleSmall
-                                            .fontWeight,
-                                        fontStyle: FlutterFlowTheme.of(context)
-                                            .titleSmall
-                                            .fontStyle,
-                                      ),
-                                      color: FlutterFlowTheme.of(context).info,
-                                      letterSpacing: 0.0,
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .titleSmall
-                                          .fontStyle,
-                                    ),
-                                elevation: 2.0,
-                                borderRadius: BorderRadius.circular(10.0),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    )
+                  : _buildResultsContent(
+                      results: _fallbackResults,
+                      sourceLabel: widget.sourceLabel,
+                    ))
+              : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('forecasts')
+                      .doc(widget.uploadId)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return _buildFailedView(
+                        'Error while reading results: ${snapshot.error}',
+                      );
+                    }
+
+                    if (!snapshot.hasData || !snapshot.data!.exists) {
+                      return _buildProcessingView(widget.sourceLabel);
+                    }
+
+                    final data = snapshot.data!.data() ?? {};
+                    final status = (data['status'] ?? 'processing')
+                        .toString()
+                        .toLowerCase();
+                    final effectiveSource =
+                        (widget.sourceLabel?.isNotEmpty == true)
+                            ? widget.sourceLabel
+                            : data['source']?.toString();
+
+                    if (status == 'failed') {
+                      final errorMessage =
+                          data['error']?.toString() ?? 'Unknown backend error.';
+                      return _buildFailedView(errorMessage);
+                    }
+
+                    final rawResults = data['results'];
+                    final parsedResults = rawResults is List
+                        ? rawResults
+                            .whereType<Map>()
+                            .map((item) => ForecastRecord.fromMap(
+                                  Map<String, dynamic>.from(item),
+                                ))
+                            .toList(growable: false)
+                        : const <ForecastRecord>[];
+
+                    if (status != 'completed' || parsedResults.isEmpty) {
+                      return _buildProcessingView(effectiveSource);
+                    }
+
+                    return _buildResultsContent(
+                      results: parsedResults,
+                      sourceLabel: effectiveSource,
+                    );
+                  },
                 ),
         ),
       ),

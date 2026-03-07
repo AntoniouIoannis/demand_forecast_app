@@ -1,6 +1,8 @@
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'verify_email_model.dart';
@@ -104,8 +106,18 @@ class _VerifyEmailWidgetState extends State<VerifyEmailWidget> {
                     ),
               ),
               FFButtonWidget(
-                onPressed: () {
-                  print('btnOK pressed ...');
+                onPressed: () async {
+                  GoRouter.of(context).clearRedirectLocation();
+                  await authManager.signOut();
+                  if (!context.mounted) {
+                    return;
+                  }
+                  context.goNamedAuth(
+                    Auth2Widget.routeName,
+                    context.mounted,
+                    queryParameters: const {'tab': '1'},
+                    ignoreRedirect: true,
+                  );
                 },
                 text: 'OK',
                 options: FFButtonOptions(

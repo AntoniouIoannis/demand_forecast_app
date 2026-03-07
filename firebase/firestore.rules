@@ -42,5 +42,12 @@ service cloud.firestore {
       allow write: if false;
       allow delete: if false;
     }
+
+    match /forecasts/{document} {
+      allow get: if request.auth != null &&
+        (resource == null || request.auth.uid == resource.data.userId);
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
   }
 }

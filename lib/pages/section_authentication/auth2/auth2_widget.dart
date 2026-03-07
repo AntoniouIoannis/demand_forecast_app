@@ -14,20 +14,27 @@ import 'auth2_model.dart';
 export 'auth2_model.dart';
 
 class Auth2Widget extends StatefulWidget {
-  const Auth2Widget({super.key});
+  const Auth2Widget({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   static String routeName = 'Auth2';
   static String routePath = 'auth2';
+
+  final int initialTabIndex;
 
   @override
   State<Auth2Widget> createState() => _Auth2WidgetState();
 }
 
 class _Auth2WidgetState extends State<Auth2Widget>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, RouteAware {
   late Auth2Model _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _hasRedirectedLoggedInUser = false;
+  bool _subscribedRoute = false;
 
   final animationsMap = <String, AnimationInfo>{};
 
@@ -39,7 +46,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
     _model.tabBarDuoController = TabController(
       vsync: this,
       length: 2,
-      initialIndex: 0,
+      initialIndex: widget.initialTabIndex.clamp(0, 1),
     )..addListener(() => safeSetState(() {}));
 
     _model.txtFieldEmailCreateTextController ??= TextEditingController();
@@ -59,6 +66,8 @@ class _Auth2WidgetState extends State<Auth2Widget>
 
     _model.passwordTextController ??= TextEditingController();
     _model.passwordFocusNode ??= FocusNode();
+
+    _resetAuthInputs();
 
     animationsMap.addAll({
       'containerOnPageLoadAnimation': AnimationInfo(
@@ -131,8 +140,41 @@ class _Auth2WidgetState extends State<Auth2Widget>
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
+  void _resetAuthInputs() {
+    _model.txtFieldEmailCreateTextController?.clear();
+    _model.passwordCreateTextController?.clear();
+    _model.repasswordCreateTextController?.clear();
+    _model.txtFieldMobilehponeTextController?.clear();
+    _model.emailAddressTextController?.clear();
+    _model.passwordTextController?.clear();
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (!_subscribedRoute && route is PageRoute) {
+      _subscribedRoute = true;
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPush() {
+    _resetAuthInputs();
+  }
+
+  @override
+  void didPopNext() {
+    _resetAuthInputs();
+  }
+
   @override
   void dispose() {
+    if (_subscribedRoute) {
+      routeObserver.unsubscribe(this);
+    }
     _model.dispose();
 
     super.dispose();
@@ -141,6 +183,20 @@ class _Auth2WidgetState extends State<Auth2Widget>
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+
+    if (!loggedIn) {
+      _hasRedirectedLoggedInUser = false;
+    }
+
+    if (loggedIn && !_hasRedirectedLoggedInUser) {
+      _hasRedirectedLoggedInUser = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        context.goNamedAuth(ImportDataWidget.routeName, context.mounted);
+      });
+    }
 
     return GestureDetector(
       onTap: () {
@@ -1415,7 +1471,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                   }
 
                                                                   context.goNamedAuth(
-                                                                      Auth2Widget
+                                                                      ImportDataWidget
                                                                           .routeName,
                                                                       context
                                                                           .mounted);
@@ -1508,7 +1564,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                         }
 
                                                                         context.goNamedAuth(
-                                                                            Auth2Widget.routeName,
+                                                                            ImportDataWidget.routeName,
                                                                             context.mounted);
                                                                       },
                                                                       text:
@@ -2015,8 +2071,8 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                           return;
                                                         }
 
-                                                        context.pushNamedAuth(
-                                                            HomePageWidget
+                                                        context.goNamedAuth(
+                                                            ImportDataWidget
                                                                 .routeName,
                                                             context.mounted);
                                                       },
@@ -2168,7 +2224,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                             }
 
                                                             context.goNamedAuth(
-                                                                Auth2Widget
+                                                                ImportDataWidget
                                                                     .routeName,
                                                                 context
                                                                     .mounted);
@@ -2270,7 +2326,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                   }
 
                                                                   context.goNamedAuth(
-                                                                      Auth2Widget
+                                                                      ImportDataWidget
                                                                           .routeName,
                                                                       context
                                                                           .mounted);
@@ -2365,7 +2421,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                         }
 
                                                         context.goNamedAuth(
-                                                            Auth2Widget
+                                                            ImportDataWidget
                                                                 .routeName,
                                                             context.mounted);
                                                       },

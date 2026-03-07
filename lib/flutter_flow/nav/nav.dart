@@ -73,23 +73,27 @@ class AppStateNotifier extends ChangeNotifier {
 }
 
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-      initialLocation: '/tabimportdata',
+      initialLocation: '/auth2',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) => TabimportdataWidget(),
+      errorBuilder: (context, state) => Auth2Widget(),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => TabimportdataWidget(),
+          builder: (context, _) => Auth2Widget(),
           routes: [
             FFRoute(
               name: Auth2Widget.routeName,
               path: Auth2Widget.routePath,
-              builder: (context, params) => params.isEmpty
-                  ? NavBarPage(initialPage: 'Auth2')
-                  : Auth2Widget(),
+              builder: (context, params) => NavBarPage(
+                initialPage: 'Auth2',
+                page: Auth2Widget(
+                  initialTabIndex:
+                      params.getParam<int>('tab', ParamType.int) ?? 0,
+                ),
+              ),
             ),
             FFRoute(
               name: TipsWidget.routeName,
@@ -128,6 +132,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
             FFRoute(
               name: ImportDataWidget.routeName,
               path: ImportDataWidget.routePath,
+              requireAuth: true,
               builder: (context, params) => params.isEmpty
                   ? NavBarPage(initialPage: 'importData')
                   : TabimportdataWidget(),
@@ -135,12 +140,18 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
             FFRoute(
               name: TabimportdataWidget.routeName,
               path: TabimportdataWidget.routePath,
+              requireAuth: true,
               builder: (context, params) => TabimportdataWidget(),
             ),
             FFRoute(
               name: ForecastResultsWidget.routeName,
               path: ForecastResultsWidget.routePath,
+              requireAuth: true,
               builder: (context, params) => ForecastResultsWidget(
+                uploadId: params.getParam<String>(
+                  'uploadId',
+                  ParamType.String,
+                ),
                 initialResults: params.getParam<List<dynamic>>(
                   'results',
                   ParamType.JSON,
@@ -258,7 +269,7 @@ extension GoRouterExtensions on GoRouter {
       !ignoreRedirect && appState.hasRedirect();
   void clearRedirectLocation() => appState.clearRedirectLocation();
   void setRedirectLocationIfUnset(String location) =>
-      appState.updateNotifyOnAuthChange(false);
+      appState.setRedirectLocationIfUnset(location);
 }
 
 extension _GoRouterStateExtensions on GoRouterState {
@@ -362,7 +373,7 @@ class FFRoute {
 
           if (requireAuth && !appStateNotifier.loggedIn) {
             appStateNotifier.setRedirectLocationIfUnset(state.uri.toString());
-            return '/homePage';
+            return '/auth2';
           }
           return null;
         },
