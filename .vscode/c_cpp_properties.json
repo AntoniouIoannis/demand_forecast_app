@@ -5,7 +5,7 @@
       "includePath": [
         "${workspaceFolder}/**"
       ],
-      "compilerPath": "\"C:/Program Files/dotnet/packs/Microsoft.NET.Runtime.Emscripten.3.1.56.Sdk.win-x64/10.0.1/tools/bin/clang.exe\"",
+      "compilerPath": "clang",
       "cStandard": "${default}",
       "cppStandard": "${default}",
       "intelliSenseMode": "windows-clang-x64",
