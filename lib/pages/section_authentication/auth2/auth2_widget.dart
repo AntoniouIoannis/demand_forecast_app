@@ -297,8 +297,8 @@ class _Auth2WidgetState extends State<Auth2Widget>
                               image: DecorationImage(
                                 fit: BoxFit.scaleDown,
                                 alignment: AlignmentDirectional(0.0, -1.0),
-                                image: Image.network(
-                                  'https://firebasestorage.googleapis.com/v0/b/demand-forecast-ian.firebasestorage.app/o/Picture1.jpg?alt=media&token=1d7f01ee-c943-4b3f-8b6f-0bf9482cb124',
+                                image: Image.asset(
+                                  'assets/images/profil_demo.jpg',
                                 ).image,
                               ),
                               boxShadow: [

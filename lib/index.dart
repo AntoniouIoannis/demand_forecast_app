@@ -14,6 +14,8 @@ export '/pages/section_import_data/import_data/import_data_widget.dart'
     show ImportDataWidget;
 export '/pages/section_import_data/tabimportdata/tabimportdata_widget.dart'
     show TabimportdataWidget;
+export '/pages/section_import_data/forecast_processing/forecast_processing_widget.dart'
+    show ForecastProcessingWidget;
 export '/pages/section_import_data/forecast_results/forecast_results_widget.dart'
     show ForecastResultsWidget;
 export '/pages/section_authentication/feed/feed_widget.dart' show FeedWidget;

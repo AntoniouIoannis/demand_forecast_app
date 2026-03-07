@@ -13,10 +13,44 @@ import tempfile
 
 import pandas as pd
 from flask import Flask, request
+from flask_cors import CORS
 from google.cloud import firestore, storage
+
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://localhost:50544",
+    "http://localhost:53551",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:50544",
+    "http://127.0.0.1:53551",
+    "https://demand-forecast-ian.web.app",
+    "https://demand-forecast-ian.firebaseapp.com",
+]
+
+
+def _get_allowed_origins():
+    """Return the configured CORS origin allowlist."""
+    configured_origins = os.environ.get("ALLOWED_ORIGINS", "")
+    if not configured_origins.strip():
+        return DEFAULT_ALLOWED_ORIGINS
+
+    return [
+        origin.strip()
+        for origin in configured_origins.split(",")
+        if origin.strip()
+    ]
+
 
 # Initialize Flask app
 app = Flask(__name__)
+CORS(
+    app,
+    resources={r"/*": {"origins": _get_allowed_origins()}},
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -73,7 +107,7 @@ def process_storage_event(data):
     """
     Process GCS notification.
     Trigger object: ready/{userId}/{uploadId}/READY.json
-    Input files: staging/{userId}/{uploadId}/sales2017.xlsx|sales2018.xlsx|sales2019.xlsx
+    Input files: staging/{userId}/{uploadId}/mapped_1.xlsx..mapped_3.xlsx
     """
     if not STORAGE_CLIENT or not DB:
         logger.error("GCP clients not initialized.")
@@ -97,20 +131,37 @@ def process_storage_event(data):
     user_id = parts[1]
     upload_id = parts[2]
     folder_path = f"staging/{user_id}/{upload_id}"
-
-    # Check for completion of set (2017, 2018, 2019)
     bucket = STORAGE_CLIENT.bucket(bucket_name)
+
+    ready_blob = bucket.blob(file_path)
+    try:
+        ready_payload = json.loads(ready_blob.download_as_text())
+    except Exception as exc:
+        logger.error("Failed to parse READY payload for %s: %s", file_path, exc)
+        return "Failed", 500
+
+    uploaded_files = ready_payload.get("files", [])
+    expected_files = [
+        file_info.get("mappedName")
+        for file_info in uploaded_files
+        if isinstance(file_info, dict) and file_info.get("mappedName")
+    ]
+
     blobs = list(bucket.list_blobs(prefix=folder_path))
     filenames = [b.name.split("/")[-1] for b in blobs]
 
-    required_files = ["sales2017.xlsx", "sales2018.xlsx", "sales2019.xlsx"]
-    missing = [f for f in required_files if f not in filenames]
+    if not expected_files:
+        expected_files = sorted(
+            filename for filename in filenames if filename.endswith(".xlsx")
+        )
+
+    missing = [filename for filename in expected_files if filename not in filenames]
 
     if missing:
         logger.info("Request incomplete in %s. Waiting for %s", folder_path, missing)
         return "Waiting", 200
 
-    logger.info("All files present in %s. Starting forecast.", folder_path)
+    logger.info("All expected files present in %s. Starting forecast.", folder_path)
 
     doc_ref = DB.collection("forecasts").document(upload_id)
     doc_ref.set(
@@ -120,12 +171,18 @@ def process_storage_event(data):
             "createdAt": firestore.SERVER_TIMESTAMP,
             "status": "processing",
             "source": folder_path,
+            "sourceFiles": [
+                file_info.get("originalName")
+                for file_info in uploaded_files
+                if isinstance(file_info, dict) and file_info.get("originalName")
+            ],
+            "filesUploaded": len(expected_files),
         },
         merge=True,
     )
 
     try:
-        results = run_forecast_logic(bucket, folder_path, required_files)
+        results = run_forecast_logic(bucket, folder_path, expected_files)
 
         # Save a durable results artifact in the received-files bucket.
         results_bucket_name = os.environ.get("RESULTS_BUCKET", "bucket-received-files")
@@ -153,6 +210,12 @@ def process_storage_event(data):
                 "status": "completed",
                 "results": results,
                 "source": folder_path,
+                "sourceFiles": [
+                    file_info.get("originalName")
+                    for file_info in uploaded_files
+                    if isinstance(file_info, dict) and file_info.get("originalName")
+                ],
+                "filesUploaded": len(expected_files),
                 "resultsBucket": results_bucket_name,
                 "resultsObject": results_object_path,
                 "completedAt": firestore.SERVER_TIMESTAMP,
@@ -187,9 +250,6 @@ def run_forecast_logic(bucket, folder_path, files):
             local_path = os.path.join(tmpdirname, filename)
             blob.download_to_filename(local_path)
 
-            # Identify year from filename
-            year = filename.replace("sales", "").replace(".xlsx", "")
-
             try:
                 df = pd.read_excel(local_path)
 
@@ -205,7 +265,7 @@ def run_forecast_logic(bucket, folder_path, files):
 
                 df["shipped"] = pd.to_datetime(df["shipped"], errors="coerce")
                 df = df.dropna(subset=required)
-                df["source_year"] = year
+                df["source_file"] = filename
                 data_frames.append(df)
 
             except Exception as e:

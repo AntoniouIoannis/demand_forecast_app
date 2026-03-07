@@ -4,7 +4,6 @@ import '/backend/forecast/forecast_models.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,7 +14,6 @@ export 'forecast_results_model.dart';
 class ForecastResultsWidget extends StatefulWidget {
   const ForecastResultsWidget({
     super.key,
-    this.uploadId,
     this.initialResults,
     this.sourceLabel,
   });
@@ -23,7 +21,6 @@ class ForecastResultsWidget extends StatefulWidget {
   static String routeName = 'forecastResults';
   static String routePath = 'forecastResults';
 
-  final String? uploadId;
   final List<dynamic>? initialResults;
   final String? sourceLabel;
 
@@ -33,7 +30,8 @@ class ForecastResultsWidget extends StatefulWidget {
 
 class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
   late ForecastResultsModel _model;
-  late final List<ForecastRecord> _fallbackResults;
+  late final List<ForecastRecord> _results;
+  bool _isPreparingResults = true;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -42,12 +40,19 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
     super.initState();
     _model = createModel(context, () => ForecastResultsModel());
 
-    _fallbackResults = (widget.initialResults ?? const [])
+    _results = (widget.initialResults ?? const [])
         .whereType<Map>()
         .map((item) => ForecastRecord.fromMap(Map<String, dynamic>.from(item)))
         .toList(growable: false);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (!mounted) {
+        return;
+      }
+      safeSetState(() {
+        _isPreparingResults = false;
+      });
+    });
   }
 
   @override
@@ -76,7 +81,7 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
     );
   }
 
-  Widget _buildProcessingView(String? sourceLabel) {
+  Widget _buildLoadingResultsView() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -90,45 +95,13 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Processing forecast in Cloud Run...',
+              'Forecast Results',
               style: FlutterFlowTheme.of(context).titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              sourceLabel?.isNotEmpty == true
-                  ? 'Source: $sourceLabel'
-                  : 'Waiting for backend results',
-              style: FlutterFlowTheme.of(context).bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFailedView(String errorMessage) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 44,
-              color: FlutterFlowTheme.of(context).error,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Forecast processing failed',
-              style: FlutterFlowTheme.of(context).titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage,
+              'Loading chart and data sheet...',
               style: FlutterFlowTheme.of(context).bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -379,69 +352,19 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: widget.uploadId == null || widget.uploadId!.isEmpty
-              ? (_fallbackResults.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No forecast request found.',
-                        style: FlutterFlowTheme.of(context).bodyLarge,
-                      ),
-                    )
+          child: _results.isEmpty
+              ? Center(
+                  child: Text(
+                    'No forecast data available.',
+                    style: FlutterFlowTheme.of(context).bodyLarge,
+                  ),
+                )
+              : _isPreparingResults
+                  ? _buildLoadingResultsView()
                   : _buildResultsContent(
-                      results: _fallbackResults,
+                      results: _results,
                       sourceLabel: widget.sourceLabel,
-                    ))
-              : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('forecasts')
-                      .doc(widget.uploadId)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return _buildFailedView(
-                        'Error while reading results: ${snapshot.error}',
-                      );
-                    }
-
-                    if (!snapshot.hasData || !snapshot.data!.exists) {
-                      return _buildProcessingView(widget.sourceLabel);
-                    }
-
-                    final data = snapshot.data!.data() ?? {};
-                    final status = (data['status'] ?? 'processing')
-                        .toString()
-                        .toLowerCase();
-                    final effectiveSource =
-                        (widget.sourceLabel?.isNotEmpty == true)
-                            ? widget.sourceLabel
-                            : data['source']?.toString();
-
-                    if (status == 'failed') {
-                      final errorMessage =
-                          data['error']?.toString() ?? 'Unknown backend error.';
-                      return _buildFailedView(errorMessage);
-                    }
-
-                    final rawResults = data['results'];
-                    final parsedResults = rawResults is List
-                        ? rawResults
-                            .whereType<Map>()
-                            .map((item) => ForecastRecord.fromMap(
-                                  Map<String, dynamic>.from(item),
-                                ))
-                            .toList(growable: false)
-                        : const <ForecastRecord>[];
-
-                    if (status != 'completed' || parsedResults.isEmpty) {
-                      return _buildProcessingView(effectiveSource);
-                    }
-
-                    return _buildResultsContent(
-                      results: parsedResults,
-                      sourceLabel: effectiveSource,
-                    );
-                  },
-                ),
+                    ),
         ),
       ),
     );

@@ -1,25 +1,15 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
     {
       "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
+      "type": "cppvsdbg",
       "request": "launch",
       "args": [],
       "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "c:/Users/iantoniou/FlutterFlow_projs/demand_forecast_app",
-      "program": "c:/Users/iantoniou/FlutterFlow_projs/demand_forecast_app/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "console": "externalTerminal",
+      "cwd": "c:/Users/iantoniou/FlutterFlow_projs/demand_forecast_app/android/app/src/main",
+      "program": "c:/Users/iantoniou/FlutterFlow_projs/demand_forecast_app/android/app/src/main/build/Debug/outDebug"
     }
   ]
 }

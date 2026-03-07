@@ -144,14 +144,25 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               builder: (context, params) => TabimportdataWidget(),
             ),
             FFRoute(
-              name: ForecastResultsWidget.routeName,
-              path: ForecastResultsWidget.routePath,
+              name: ForecastProcessingWidget.routeName,
+              path: ForecastProcessingWidget.routePath,
               requireAuth: true,
-              builder: (context, params) => ForecastResultsWidget(
+              builder: (context, params) => ForecastProcessingWidget(
                 uploadId: params.getParam<String>(
                   'uploadId',
                   ParamType.String,
                 ),
+                sourceLabel: params.getParam<String>(
+                  'sourceLabel',
+                  ParamType.String,
+                ),
+              ),
+            ),
+            FFRoute(
+              name: ForecastResultsWidget.routeName,
+              path: ForecastResultsWidget.routePath,
+              requireAuth: true,
+              builder: (context, params) => ForecastResultsWidget(
                 initialResults: params.getParam<List<dynamic>>(
                   'results',
                   ParamType.JSON,

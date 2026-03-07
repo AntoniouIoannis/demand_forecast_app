@@ -6,10 +6,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/pages/section_authentication/auth2/auth2_widget.dart';
-import '/pages/section_import_data/forecast_results/forecast_results_widget.dart';
+import '/pages/section_import_data/forecast_processing/forecast_processing_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:csv/csv.dart';
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +28,8 @@ class TabimportdataWidget extends StatefulWidget {
 }
 
 class _TabimportdataWidgetState extends State<TabimportdataWidget> {
+  static const List<String> _allowedExtensions = ['xls', 'xlsx'];
+
   late TabimportdataModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final Map<String, PlatformFile?> _filesByYear = {
@@ -53,13 +54,16 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     super.dispose();
   }
 
-  bool get _hasAllRequiredFilesSelected =>
-      _filesByYear.values.every((file) => file?.bytes != null);
+  bool get _hasAtLeastOneFileSelected =>
+      _filesByYear.values.any((file) => file?.bytes != null);
+
+  String get _supportedExtensionsLabel =>
+      _allowedExtensions.map((extension) => '.$extension').join(', ');
 
   Future<void> _pickFileForYear(String year) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['xlsx', 'xls', 'csv'],
+      allowedExtensions: _allowedExtensions,
       withData: true,
       allowMultiple: false,
     );
@@ -80,7 +84,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   }
 
   Future<void> _submitForecast() async {
-    if (!_hasAllRequiredFilesSelected || _isSubmitting) {
+    if (!_hasAtLeastOneFileSelected || _isSubmitting) {
       return;
     }
 
@@ -97,57 +101,62 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
       final uploadId = const Uuid().v4();
 
       final storage = FirebaseStorage.instance;
+        final selectedOrder = ['2017', '2018', '2019'];
+        final selectedEntries = _filesByYear.entries
+          .where((entry) => entry.value?.bytes != null)
+          .toList(growable: false);
+        final fallbackFile = selectedEntries.isNotEmpty ? selectedEntries.first.value : null;
 
       int filesUploaded = 0;
-      final selectedOrder = ['2017', '2018', '2019'];
-      final selectedNames = selectedOrder
-          .map((year) => _filesByYear[year]?.name)
+      final uploadedFiles = <Map<String, dynamic>>[];
+      final selectedNames = selectedEntries
+          .map((entry) => entry.value?.name)
           .whereType<String>()
           .where((name) => name.trim().isNotEmpty)
           .toList(growable: false);
 
+      if (fallbackFile == null || fallbackFile.bytes == null) {
+        throw const FormatException('Please select at least one Excel file.');
+      }
+
       for (final year in selectedOrder) {
-        final selected = _filesByYear[year];
-        if (selected != null && selected.bytes != null) {
-          // Prepare the mapped file (handles CSV conversion/validation)
-          final mappedFile = _prepareMappedFile(year, selected);
+        final selected = _filesByYear[year] ?? fallbackFile;
+        final mappedFile = _prepareMappedFile(year, selected);
 
-          final filePath = 'staging/$userId/$uploadId/${mappedFile.fileName}';
-          final ref = storage.ref().child(filePath);
+        final filePath = 'staging/$userId/$uploadId/${mappedFile.fileName}';
+        final ref = storage.ref().child(filePath);
 
-          final metadata = SettableMetadata(
-            contentType:
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            customMetadata: {
-              'year': year,
-              'originalName': selected.name,
-              'uploadId': uploadId,
-              'mapped': 'true',
-            },
-          );
-
-          await ref.putData(Uint8List.fromList(mappedFile.bytes), metadata);
-          filesUploaded++;
-        }
-      }
-
-      if (filesUploaded == 0) {
-        throw const FormatException('Please select at least one file.');
-      }
-
-      if (filesUploaded != selectedOrder.length) {
-        throw const FormatException(
-          'Απαιτούνται και τα 3 αρχεία (2017, 2018, 2019) για forecasting.',
+        final metadata = SettableMetadata(
+          contentType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          customMetadata: {
+            'year': year,
+            'originalName': selected.name,
+            'uploadId': uploadId,
+            'mapped': 'true',
+            'demoFilled': (_filesByYear[year] == null).toString(),
+          },
         );
+
+        await ref.putData(Uint8List.fromList(mappedFile.bytes), metadata);
+        filesUploaded++;
+        uploadedFiles.add({
+          'year': year,
+          'originalName': selected.name,
+          'mappedName': mappedFile.fileName,
+          'originalExtension': (selected.extension ?? '').toLowerCase().trim(),
+          'demoFilled': _filesByYear[year] == null,
+        });
       }
 
-      // Publish a final marker object so backend triggers only after mapping+upload is complete.
       final readyPayload = jsonEncode({
         'userId': userId,
         'uploadId': uploadId,
         'filesUploaded': filesUploaded,
+        'files': uploadedFiles,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'mapped': true,
+        'expectedColumns': const ['shipped', 'product_id', 'ordered_qty'],
       });
       final readyRef =
           storage.ref().child('ready/$userId/$uploadId/READY.json');
@@ -164,18 +173,15 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
 
       if (mounted) {
         context.pushNamed(
-          ForecastResultsWidget.routeName,
+          ForecastProcessingWidget.routeName,
           extra: {
             'uploadId': uploadId,
             'sourceLabel': selectedNames.join(', '),
           },
         );
 
-        // Clear selection
         safeSetState(() {
-          _filesByYear['2017'] = null;
-          _filesByYear['2018'] = null;
-          _filesByYear['2019'] = null;
+          _filesByYear.updateAll((_, __) => null);
         });
       }
     } on FormatException catch (e) {
@@ -210,9 +216,12 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     }
 
     final extension = selectedFile.extension?.toLowerCase() ?? '';
-    final rows = extension == 'xlsx' || extension == 'xls'
-        ? _readSpreadsheetRows(bytes)
-        : _readCsvRows(bytes);
+    if (extension != 'xlsx' && extension != 'xls') {
+      throw FormatException(
+        'Για το demo επιτρέπονται μόνο Excel αρχεία ($_supportedExtensionsLabel).',
+      );
+    }
+    final rows = _readSpreadsheetRows(bytes);
     if (rows.length < 2) {
       throw FormatException(
         'Το αρχείο ${selectedFile.name} δεν έχει επαρκή δεδομένα (header + rows).',
@@ -304,11 +313,6 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     );
   }
 
-  List<List<dynamic>> _readCsvRows(List<int> bytes) {
-    final csvText = utf8.decode(bytes, allowMalformed: true);
-    return const CsvToListConverter(shouldParseNumbers: false).convert(csvText);
-  }
-
   List<List<dynamic>> _readSpreadsheetRows(List<int> bytes) {
     final workbook = xls.Excel.decodeBytes(bytes);
     if (workbook.tables.isEmpty) {
@@ -356,6 +360,53 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   bool _isRowCompletelyEmpty(List<dynamic> row) =>
       row.every((cell) => cell.toString().trim().isEmpty);
 
+  Widget _buildHintCard({
+    required String title,
+    required String content,
+    double? width,
+  }) {
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F4),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFDADCE0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: FlutterFlowTheme.of(context).titleSmall.override(
+                    font: GoogleFonts.interTight(
+                      fontWeight:
+                          FlutterFlowTheme.of(context).titleSmall.fontWeight,
+                      fontStyle:
+                          FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                    ),
+                    letterSpacing: 0.0,
+                    fontWeight:
+                        FlutterFlowTheme.of(context).titleSmall.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                  ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              content,
+              style: GoogleFonts.robotoMono(
+                color: FlutterFlowTheme.of(context).primaryText,
+                fontSize: 12.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _fileCard(String year) {
     final selectedFile = _filesByYear[year];
 
@@ -394,6 +445,11 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
               selectedFile?.name ?? 'No file selected',
               style: FlutterFlowTheme.of(context).bodyMedium,
             ),
+            const SizedBox(height: 6.0),
+            Text(
+              'Allowed: $_supportedExtensionsLabel',
+              style: FlutterFlowTheme.of(context).bodySmall,
+            ),
             const SizedBox(height: 10.0),
             Row(
               children: [
@@ -401,10 +457,10 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                   onPressed: _isSubmitting
                       ? null
                       : () async {
-                          await _pickFileForYear(year);
+                        await _pickFileForYear(year);
                         },
                   text: selectedFile == null
-                      ? 'Select Excel/CSV'
+                      ? 'Select Excel'
                       : 'Replace File',
                   options: FFButtonOptions(
                     height: 40.0,
@@ -519,8 +575,41 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Upload exactly 3 files (2017, 2018, 2019) in Excel/CSV',
+                  'Demo mode: upload 1, 2, or 3 of the specific yearly Excel files. If only 1 file is selected, it will be reused for the missing years to keep the backend flow unchanged.',
                   style: FlutterFlowTheme.of(context).bodyMedium,
+                ),
+                const SizedBox(height: 12.0),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final useRowLayout = constraints.maxWidth >= 900.0;
+                    final cardWidth = useRowLayout
+                        ? (constraints.maxWidth - 24.0) / 3
+                        : double.infinity;
+
+                    return Wrap(
+                      spacing: 12.0,
+                      runSpacing: 12.0,
+                      children: [
+                        _buildHintCard(
+                          width: cardWidth,
+                          title: 'Supported file types',
+                          content: '.xls\n.xlsx',
+                        ),
+                        _buildHintCard(
+                          width: cardWidth,
+                          title: 'Expected columns and sample values',
+                          content:
+                              'shipped | product_id | ordered_qty\n2025-01-15 | BIC-1001 | 42\n2025-02-01 | HALCOR-77 | 17\n2025-03-11 | ELVAL-2020 | 63',
+                        ),
+                        _buildHintCard(
+                          width: cardWidth,
+                          title: 'Demo note',
+                          content:
+                              'Keep the three upload slots as 2017 / 2018 / 2019.\nFor a quick demo, selecting just one Excel file is enough.\nThe app will duplicate it into sales2017.xlsx, sales2018.xlsx and sales2019.xlsx before sending the request.',
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
@@ -532,7 +621,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Uploading files and preparing forecast request...',
+                                'Uploading demo files and preparing forecast request...',
                                 style: FlutterFlowTheme.of(context).bodySmall,
                               ),
                               const SizedBox(height: 8.0),
@@ -555,7 +644,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                 _fileCard('2019'),
                 const Spacer(),
                 FFButtonWidget(
-                  onPressed: (_hasAllRequiredFilesSelected && !_isSubmitting)
+                  onPressed: (_hasAtLeastOneFileSelected && !_isSubmitting)
                       ? () async {
                           await _submitForecast();
                         }
