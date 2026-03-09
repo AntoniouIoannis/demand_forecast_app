@@ -69,7 +69,7 @@ except Exception as e:
 @app.route("/", methods=["GET"])
 def health_check():
     """Health check endpoint to verify service is running."""
-    return "Demand Forecast API is Running!", 200
+    return "John said: Demand Forecast API is Running! Please wait.", 200
 
 
 @app.route("/pubsub", methods=["POST"])
@@ -137,8 +137,8 @@ def process_storage_event(data):
     try:
         ready_payload = json.loads(ready_blob.download_as_text())
     except Exception as exc:
-        logger.error("Failed to parse READY payload for %s: %s", file_path, exc)
-        return "Failed", 500
+        logger.error("John said: Failed to parse READY payload for %s: %s", file_path, exc)
+        return "John said that system Failed [error 500] to parse READY payload", 500
 
     uploaded_files = ready_payload.get("files", [])
     expected_files = [
@@ -234,9 +234,9 @@ def process_storage_event(data):
             },
             merge=True,
         )
-        return "Failed", 500
+        return "John said that status is 500. That means: Failed!!! Booo.", 500
 
-    return "Processed", 200
+    return "John said that status is 200. That means: Processed!!! Yaaay.", 200
 
 
 def run_forecast_logic(bucket, folder_path, files):
@@ -273,7 +273,7 @@ def run_forecast_logic(bucket, folder_path, files):
                 raise
 
     if not data_frames:
-        raise ValueError("No data frames created")
+        raise ValueError("John said: No data frames created")
 
     full_df = pd.concat(data_frames, ignore_index=True)
 
