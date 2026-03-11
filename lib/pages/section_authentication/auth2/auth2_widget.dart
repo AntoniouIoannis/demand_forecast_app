@@ -1,4 +1,5 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/backend.dart';
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -188,7 +189,9 @@ class _Auth2WidgetState extends State<Auth2Widget>
       _hasRedirectedLoggedInUser = false;
     }
 
-    if (loggedIn && !_hasRedirectedLoggedInUser) {
+    if (loggedIn &&
+        !_hasRedirectedLoggedInUser &&
+        currentUser?.emailVerified == true) {
       _hasRedirectedLoggedInUser = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
@@ -1267,6 +1270,51 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                         if (user == null) {
                                                           return;
                                                         }
+
+                                                        // Create Firestore user document
+                                                        final userDocRef =
+                                                            UsersRecord
+                                                                .collection
+                                                                .doc(user.uid);
+                                                        await userDocRef.set(
+                                                          createUsersRecordData(
+                                                            email: _model
+                                                                .txtFieldEmailCreateTextController
+                                                                .text,
+                                                            uid: user.uid,
+                                                            createdTime:
+                                                                getCurrentTimestamp,
+                                                            mobilephone: _model
+                                                                .txtFieldMobilehponeTextController
+                                                                .text,
+                                                          ),
+                                                        );
+
+                                                        // Create user subcollections
+                                                        await userDocRef
+                                                            .collection(
+                                                                'upload-files')
+                                                            .doc('_init')
+                                                            .set({
+                                                          'createdAt':
+                                                              getCurrentTimestamp
+                                                        });
+                                                        await userDocRef
+                                                            .collection(
+                                                                'processing-files')
+                                                            .doc('_init')
+                                                            .set({
+                                                          'createdAt':
+                                                              getCurrentTimestamp
+                                                        });
+                                                        await userDocRef
+                                                            .collection(
+                                                                'received-files')
+                                                            .doc('_init')
+                                                            .set({
+                                                          'createdAt':
+                                                              getCurrentTimestamp
+                                                        });
 
                                                         // sendEmail
                                                         await authManager
