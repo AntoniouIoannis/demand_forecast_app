@@ -49,5 +49,16 @@ service cloud.firestore {
       allow list: if false;
       allow create, update, delete: if false;
     }
+
+    match /visitor_profiles/{uid} {
+      allow create: if request.auth != null &&
+        request.auth.uid == uid &&
+        request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null &&
+        request.auth.uid == uid &&
+        request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
+    }
   }
 }

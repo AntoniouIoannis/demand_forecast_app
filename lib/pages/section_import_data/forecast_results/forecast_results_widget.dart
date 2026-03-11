@@ -4,7 +4,9 @@ import '/backend/forecast/forecast_models.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/index.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
@@ -38,6 +40,9 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  bool get _isAnonymousUser =>
+      FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
+
   @override
   void initState() {
     super.initState();
@@ -49,7 +54,8 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
         .toList(growable: false);
 
     if (widget.debugMode) {
-      _debugEvents.add('[init] Results page opened with ${_results.length} rows.');
+      _debugEvents
+          .add('[init] Results page opened with ${_results.length} rows.');
       _debugEvents.add('[init] Waiting for chart and table rendering.');
     }
 
@@ -84,12 +90,14 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Results debug trace', style: FlutterFlowTheme.of(context).titleSmall),
+            Text('Results debug trace',
+                style: FlutterFlowTheme.of(context).titleSmall),
             const SizedBox(height: 8.0),
             ..._debugEvents.map(
               (event) => Padding(
                 padding: const EdgeInsets.only(bottom: 4.0),
-                child: Text(event, style: FlutterFlowTheme.of(context).bodySmall),
+                child:
+                    Text(event, style: FlutterFlowTheme.of(context).bodySmall),
               ),
             ),
           ],
@@ -323,36 +331,127 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
           Row(
             children: [
               Expanded(
-                child: FFButtonWidget(
-                  onPressed: () => _downloadCsv(results),
-                  text: 'Download CSV',
-                  options: FFButtonOptions(
-                    height: 48.0,
-                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                    iconPadding:
-                        const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-                    color: FlutterFlowTheme.of(context).primary,
-                    textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                          font: GoogleFonts.inter(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .titleSmall
-                                .fontStyle,
+                child: _isAnonymousUser
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Anonymous mode: You can view chart and data, but download is available only for authenticated users.',
+                            style: FlutterFlowTheme.of(context).bodySmall,
                           ),
-                          color: FlutterFlowTheme.of(context).info,
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .titleSmall
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).titleSmall.fontStyle,
+                          const SizedBox(height: 10.0),
+                          FFButtonWidget(
+                            onPressed: () => context.goNamedAuth(
+                              Auth2Widget.routeName,
+                              context.mounted,
+                            ),
+                            text: 'Sign up / Login to enable download',
+                            options: FFButtonOptions(
+                              width: double.infinity,
+                              height: 48.0,
+                              padding: const EdgeInsetsDirectional.fromSTEB(
+                                  0, 0, 0, 0),
+                              iconPadding: const EdgeInsetsDirectional.fromSTEB(
+                                  0, 0, 0, 0),
+                              color: FlutterFlowTheme.of(context).primary,
+                              textStyle: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                  .override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .titleSmall
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .titleSmall
+                                          .fontStyle,
+                                    ),
+                                    color: FlutterFlowTheme.of(context).info,
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .fontStyle,
+                                  ),
+                              elevation: 2.0,
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          FFButtonWidget(
+                            onPressed: () => context.goNamedAuth(
+                              WelcomeWidget.routeName,
+                              context.mounted,
+                            ),
+                            text: 'Exit to Welcome',
+                            options: FFButtonOptions(
+                              width: double.infinity,
+                              height: 44.0,
+                              padding: const EdgeInsetsDirectional.fromSTEB(
+                                  0, 0, 0, 0),
+                              iconPadding: const EdgeInsetsDirectional.fromSTEB(
+                                  0, 0, 0, 0),
+                              color: FlutterFlowTheme.of(context).secondary,
+                              textStyle: FlutterFlowTheme.of(context)
+                                  .bodyMedium
+                                  .override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .bodyMedium
+                                          .fontStyle,
+                                    ),
+                                    color: FlutterFlowTheme.of(context).info,
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .bodyMedium
+                                        .fontStyle,
+                                  ),
+                              elevation: 0.0,
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                        ],
+                      )
+                    : FFButtonWidget(
+                        onPressed: () => _downloadCsv(results),
+                        text: 'Download CSV',
+                        options: FFButtonOptions(
+                          height: 48.0,
+                          padding:
+                              const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                          iconPadding:
+                              const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                          color: FlutterFlowTheme.of(context).primary,
+                          textStyle:
+                              FlutterFlowTheme.of(context).titleSmall.override(
+                                    font: GoogleFonts.inter(
+                                      fontWeight: FlutterFlowTheme.of(context)
+                                          .titleSmall
+                                          .fontWeight,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .titleSmall
+                                          .fontStyle,
+                                    ),
+                                    color: FlutterFlowTheme.of(context).info,
+                                    letterSpacing: 0.0,
+                                    fontWeight: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .fontWeight,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .fontStyle,
+                                  ),
+                          elevation: 2.0,
+                          borderRadius: BorderRadius.circular(10.0),
                         ),
-                    elevation: 2.0,
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
+                      ),
               ),
             ],
           ),

@@ -73,17 +73,22 @@ class AppStateNotifier extends ChangeNotifier {
 }
 
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-      initialLocation: '/auth2',
+      initialLocation: '/welcome',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) => Auth2Widget(),
+      errorBuilder: (context, state) => WelcomeWidget(),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => Auth2Widget(),
+          builder: (context, _) => WelcomeWidget(),
           routes: [
+            FFRoute(
+              name: WelcomeWidget.routeName,
+              path: WelcomeWidget.routePath,
+              builder: (context, params) => WelcomeWidget(),
+            ),
             FFRoute(
               name: Auth2Widget.routeName,
               path: Auth2Widget.routePath,
