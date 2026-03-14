@@ -382,7 +382,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Hellow viewer',
+                                  'Hello, welcome!',
                                   style: theme.headlineMedium,
                                 ),
                                 const SizedBox(height: 8.0),
@@ -393,7 +393,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                   ),
                                 const SizedBox(height: 24.0),
                                 Text(
-                                  'select youe bussiness market',
+                                  'Select your business market',
                                   style: theme.titleMedium,
                                 ),
                                 const SizedBox(height: 12.0),
