@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,10 +32,23 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     'Hospitality',
     'Other',
   ];
+  static const List<String> _marketCountries = <String>[
+    'Greece',
+    'Cyprus',
+    'Italy',
+    'Germany',
+    'France',
+    'Spain',
+    'United Kingdom',
+    'United States',
+  ];
+  static const List<int> _forecastHorizons = <int>[30, 90, 365];
 
   bool _loading = true;
   bool _submitting = false;
   String? _selectedMarket;
+  String? _selectedCountry;
+  int? _selectedForecastHorizonDays;
   String? _anonymousUid;
 
   @override
@@ -99,6 +111,8 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
       'entryAt': Timestamp.fromDate(now),
       'lastSeenAt': Timestamp.fromDate(now),
       'market': _selectedMarket,
+      'marketCountry': _selectedCountry,
+      'forecastHorizonDays': _selectedForecastHorizonDays,
       'app': {
         'name': packageInfo.appName,
         'packageName': packageInfo.packageName,
@@ -229,7 +243,10 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
   }
 
   Future<void> _continueToApp() async {
-    if (_selectedMarket == null || _anonymousUid == null) {
+    if (_selectedMarket == null ||
+        _selectedCountry == null ||
+        _selectedForecastHorizonDays == null ||
+        _anonymousUid == null) {
       return;
     }
 
@@ -238,6 +255,12 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     });
 
     try {
+      FFAppState().update(() {
+        FFAppState().selectedBusinessMarket = _selectedMarket;
+        FFAppState().selectedMarketCountry = _selectedCountry;
+        FFAppState().forecastHorizonDays = _selectedForecastHorizonDays;
+      });
+
       try {
         await _saveOrUpdateVisitorProfile(uid: _anonymousUid!);
       } on FirebaseException catch (e) {
@@ -259,6 +282,35 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
           _submitting = false;
         });
       }
+    }
+  }
+
+  Future<void> _showPrivacyMessageThenContinue() async {
+    if (_submitting) {
+      return;
+    }
+
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Privacy Message'),
+        content: const Text(
+          'Your uploaded data is used only for generating forecast models.\n'
+          'Files are not shared with third parties and can be deleted at any time,\n'
+          'data needed to improve forecast accuracy.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    if (accepted == true && mounted) {
+      await _continueToApp();
     }
   }
 
@@ -370,36 +422,120 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                   ),
                                 ),
                                 const SizedBox(height: 20.0),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: context.mounted
-                                        ? () => context.goNamedAuth(
-                                              Auth2Widget.routeName,
-                                              context.mounted,
-                                            )
-                                        : null,
-                                    child: const Text('Navigate to Auth2'),
+                                Text(
+                                  'Where does your market operate?',
+                                  style: theme.titleMedium,
+                                ),
+                                const SizedBox(height: 12.0),
+                                DropdownButtonFormField<String>(
+                                  initialValue: _selectedCountry,
+                                  items: _marketCountries
+                                      .map(
+                                        (country) => DropdownMenuItem<String>(
+                                          value: country,
+                                          child: Text(country),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedCountry = value;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Choose country market',
+                                    filled: true,
+                                    fillColor: theme.primaryBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(height: 10.0),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed:
-                                        (_selectedMarket == null || _submitting)
-                                            ? null
-                                            : _continueToApp,
-                                    child: _submitting
-                                        ? const SizedBox(
-                                            height: 20.0,
-                                            width: 20.0,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.0,
-                                            ),
-                                          )
-                                        : const Text('Navigate to ImportData'),
+                                const SizedBox(height: 20.0),
+                                Text(
+                                  'Forecast horizon',
+                                  style: theme.titleMedium,
+                                ),
+                                const SizedBox(height: 12.0),
+                                DropdownButtonFormField<int>(
+                                  initialValue: _selectedForecastHorizonDays,
+                                  items: _forecastHorizons
+                                      .map(
+                                        (days) => DropdownMenuItem<int>(
+                                          value: days,
+                                          child: Text('$days days'),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedForecastHorizonDays = value;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Select horizon',
+                                    filled: true,
+                                    fillColor: theme.primaryBackground,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                    ),
                                   ),
+                                ),
+                                const SizedBox(height: 20.0),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 56.0,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                            ),
+                                          ),
+                                          onPressed: context.mounted
+                                              ? () => context.goNamedAuth(
+                                                    Auth2Widget.routeName,
+                                                    context.mounted,
+                                                  )
+                                              : null,
+                                          child: const Text('Sign Up'),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12.0),
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 56.0,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                            ),
+                                          ),
+                                          onPressed: (_selectedMarket == null ||
+                                                  _selectedCountry == null ||
+                                                  _selectedForecastHorizonDays ==
+                                                      null ||
+                                                  _submitting)
+                                              ? null
+                                              : _showPrivacyMessageThenContinue,
+                                          child: _submitting
+                                              ? const SizedBox(
+                                                  height: 20.0,
+                                                  width: 20.0,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2.0,
+                                                  ),
+                                                )
+                                              : const Text('Go to ImportData'),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

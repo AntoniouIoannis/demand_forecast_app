@@ -29,13 +29,18 @@ class TabimportdataWidget extends StatefulWidget {
 
 class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   static const List<String> _allowedExtensions = ['xls', 'xlsx'];
+  static const List<String> _uploadSlots = [
+    'file_slot_1',
+    'file_slot_2',
+    'file_slot_3',
+  ];
 
   late TabimportdataModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  final Map<String, PlatformFile?> _filesByYear = {
-    '2017': null,
-    '2018': null,
-    '2019': null,
+  final Map<String, PlatformFile?> _filesBySlot = {
+    'file_slot_1': null,
+    'file_slot_2': null,
+    'file_slot_3': null,
   };
 
   bool _isSubmitting = false;
@@ -57,7 +62,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   }
 
   bool get _hasAtLeastOneFileSelected =>
-      _filesByYear.values.any((file) => file?.bytes != null);
+      _filesBySlot.values.any((file) => file?.bytes != null);
 
   String get _supportedExtensionsLabel =>
       _allowedExtensions.map((extension) => '.$extension').join(', ');
@@ -95,7 +100,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     );
   }
 
-  Future<void> _pickFileForYear(String year) async {
+  Future<void> _pickFileForSlot(String slot) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: _allowedExtensions,
@@ -108,16 +113,49 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     }
 
     safeSetState(() {
-      _filesByYear[year] = result.files.first;
+      _filesBySlot[slot] = result.files.first;
     });
-    _appendDebugLog('File selected for $year: ${result.files.first.name}');
+    _appendDebugLog('File selected for $slot: ${result.files.first.name}');
   }
 
-  void _clearFileForYear(String year) {
+  void _clearFileForSlot(String slot) {
     safeSetState(() {
-      _filesByYear[year] = null;
+      _filesBySlot[slot] = null;
     });
-    _appendDebugLog('File cleared for $year');
+    _appendDebugLog('File cleared for $slot');
+  }
+
+  Future<void> _showUploadGuideThenSubmit() async {
+    if (_isSubmitting || !_hasAtLeastOneFileSelected) {
+      return;
+    }
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Upload Files Guide'),
+        content: const Text(
+          'You can upload one, two, or three files.\n'
+          'File names can be any name.\n'
+          'Only the file format and expected columns are required for ML processing.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    if (proceed == true && mounted) {
+      await _submitForecast();
+    }
   }
 
   Future<void> _submitForecast() async {
@@ -141,12 +179,9 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
       await _debugCheckpoint('Upload ID Created', 'uploadId = $uploadId');
 
       final storage = FirebaseStorage.instance;
-      final selectedOrder = ['2017', '2018', '2019'];
-      final selectedEntries = _filesByYear.entries
+      final selectedEntries = _filesBySlot.entries
           .where((entry) => entry.value?.bytes != null)
           .toList(growable: false);
-      final fallbackFile =
-          selectedEntries.isNotEmpty ? selectedEntries.first.value : null;
 
       int filesUploaded = 0;
       final uploadedFiles = <Map<String, dynamic>>[];
@@ -156,7 +191,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           .where((name) => name.trim().isNotEmpty)
           .toList(growable: false);
 
-      if (fallbackFile == null || fallbackFile.bytes == null) {
+      if (selectedEntries.isEmpty) {
         throw const FormatException('Please select at least one Excel file.');
       }
       await _debugCheckpoint(
@@ -164,15 +199,15 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         'Selected files: ${selectedNames.join(', ')}',
       );
 
-      for (final year in selectedOrder) {
-        final selected = _filesByYear[year] ?? fallbackFile;
+      for (var i = 0; i < selectedEntries.length; i++) {
+        final slotEntry = selectedEntries[i];
+        final selected = slotEntry.value!;
+        final slotKey = slotEntry.key;
         await _debugCheckpoint(
-          'Prepare File $year',
-          _filesByYear[year] == null
-              ? 'No file selected for $year. Reusing ${selected.name} for demo.'
-              : 'Using ${selected.name} for $year.',
+          'Prepare File ${i + 1}',
+          'Using ${selected.name} from $slotKey.',
         );
-        final mappedFile = _prepareMappedFile(year, selected);
+        final mappedFile = _prepareMappedFile(i + 1, selected);
 
         final filePath = 'staging/$userId/$uploadId/${mappedFile.fileName}';
         final ref = storage.ref().child(filePath);
@@ -181,11 +216,10 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           contentType:
               'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           customMetadata: {
-            'year': year,
+            'slotKey': slotKey,
             'originalName': selected.name,
             'uploadId': uploadId,
             'mapped': 'true',
-            'demoFilled': (_filesByYear[year] == null).toString(),
           },
         );
 
@@ -196,11 +230,10 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           'Uploaded ${mappedFile.fileName} to $filePath',
         );
         uploadedFiles.add({
-          'year': year,
+          'slotKey': slotKey,
           'originalName': selected.name,
           'mappedName': mappedFile.fileName,
           'originalExtension': (selected.extension ?? '').toLowerCase().trim(),
-          'demoFilled': _filesByYear[year] == null,
         });
       }
 
@@ -208,6 +241,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         'userId': userId,
         'uploadId': uploadId,
         'filesUploaded': filesUploaded,
+        'selectedFileCount': selectedEntries.length,
         'files': uploadedFiles,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'mapped': true,
@@ -232,6 +266,10 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
 
       if (mounted) {
         _appendDebugLog('Opening Forecast Processing page');
+        FFAppState().update(() {
+          FFAppState().forecastReferenceDateIso =
+              DateTime.now().toUtc().toIso8601String();
+        });
         context.pushNamed(
           ForecastProcessingWidget.routeName,
           extra: {
@@ -242,7 +280,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         );
 
         safeSetState(() {
-          _filesByYear.updateAll((_, __) => null);
+          _filesBySlot.updateAll((_, __) => null);
         });
       }
     } on FormatException catch (e) {
@@ -272,7 +310,8 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     }
   }
 
-  ForecastInputFile _prepareMappedFile(String year, PlatformFile selectedFile) {
+  ForecastInputFile _prepareMappedFile(
+      int fileIndex, PlatformFile selectedFile) {
     final bytes = selectedFile.bytes;
     if (bytes == null || bytes.isEmpty) {
       throw const FormatException('Selected file is empty.');
@@ -369,11 +408,23 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           'Αποτυχία δημιουργίας mapped Excel για ${selectedFile.name}.');
     }
 
+    final sanitizedBaseName = _sanitizeFileBaseName(selectedFile.name);
+
     return ForecastInputFile(
-      fieldName: 'sales$year',
-      fileName: 'sales$year.xlsx',
+      fieldName: 'sales$fileIndex',
+      fileName: '${sanitizedBaseName}_mapped.xlsx',
       bytes: encoded,
     );
+  }
+
+  String _sanitizeFileBaseName(String filename) {
+    final dotIndex = filename.lastIndexOf('.');
+    final rawBase = dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
+    final sanitized = rawBase
+        .replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .trim();
+    return sanitized.isEmpty ? 'uploaded_file' : sanitized;
   }
 
   List<List<dynamic>> _readSpreadsheetRows(List<int> bytes) {
@@ -540,8 +591,9 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
     );
   }
 
-  Widget _fileCard(String year) {
-    final selectedFile = _filesByYear[year];
+  Widget _fileCard(String slot) {
+    final selectedFile = _filesBySlot[slot];
+    final slotIndex = _uploadSlots.indexOf(slot) + 1;
 
     return Container(
       width: double.infinity,
@@ -558,7 +610,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Upload File',
+              'Upload File $slotIndex',
               style: FlutterFlowTheme.of(context).titleMedium.override(
                     font: GoogleFonts.interTight(
                       fontWeight:
@@ -575,7 +627,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
             ),
             const SizedBox(height: 8.0),
             Text(
-              selectedFile?.name ?? 'No file selected',
+              selectedFile?.name ?? 'Uploaded file name will appear here',
               style: FlutterFlowTheme.of(context).bodyMedium,
             ),
             const SizedBox(height: 6.0),
@@ -590,11 +642,9 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                   onPressed: _isSubmitting
                       ? null
                       : () async {
-                        await _pickFileForYear(year);
+                          await _pickFileForSlot(slot);
                         },
-                  text: selectedFile == null
-                      ? 'Select Excel'
-                      : 'Replace File',
+                  text: selectedFile == null ? 'Select Excel' : 'Replace File',
                   options: FFButtonOptions(
                     height: 40.0,
                     padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
@@ -627,7 +677,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                   onPressed: selectedFile == null || _isSubmitting
                       ? null
                       : () {
-                          _clearFileForYear(year);
+                          _clearFileForSlot(slot);
                         },
                   text: 'Delete',
                   options: FFButtonOptions(
@@ -708,7 +758,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Demo mode: upload 1, 2, or 3 of the specific yearly Excel files. If only 1 file is selected, it will be reused for the missing years to keep the backend flow unchanged.',
+                  'Upload one, two, or three Excel files. The app processes only the files you upload.',
                   style: FlutterFlowTheme.of(context).bodyMedium,
                 ),
                 const SizedBox(height: 12.0),
@@ -736,9 +786,9 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                         ),
                         _buildHintCard(
                           width: cardWidth,
-                          title: 'Demo note',
+                          title: 'Upload behavior',
                           content:
-                              'Keep the three upload slots as 2017 / 2018 / 2019.\nFor a quick demo, selecting just one Excel file is enough.\nThe app will duplicate it into sales2017.xlsx, sales2018.xlsx and sales2019.xlsx before sending the request.',
+                              'You can upload 1, 2, or 3 files.\nOnly uploaded files are used for training and forecast processing.\nFile names are dynamic and do not need a fixed naming pattern.',
                         ),
                       ],
                     );
@@ -756,7 +806,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Uploading demo files and preparing forecast request...',
+                                'Uploading selected files and preparing forecast request...',
                                 style: FlutterFlowTheme.of(context).bodySmall,
                               ),
                               const SizedBox(height: 8.0),
@@ -772,16 +822,16 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                       : const SizedBox.shrink(key: ValueKey('forecast-idle')),
                 ),
                 const SizedBox(height: 16.0),
-                _fileCard('2017'),
+                _fileCard('file_slot_1'),
                 const SizedBox(height: 12.0),
-                _fileCard('2018'),
+                _fileCard('file_slot_2'),
                 const SizedBox(height: 12.0),
-                _fileCard('2019'),
+                _fileCard('file_slot_3'),
                 const SizedBox(height: 16.0),
                 FFButtonWidget(
                   onPressed: (_hasAtLeastOneFileSelected && !_isSubmitting)
                       ? () async {
-                          await _submitForecast();
+                          await _showUploadGuideThenSubmit();
                         }
                       : null,
                   text: _isSubmitting
