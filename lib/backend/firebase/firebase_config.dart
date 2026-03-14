@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 Future initFirebase() async {
@@ -11,6 +12,7 @@ Future initFirebase() async {
             storageBucket: "demand-forecast-ian.firebasestorage.app",
             messagingSenderId: "1072203670086",
             appId: "1:1072203670086:web:55c85ffd0c44220b432047"));
+    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   } else {
     await Firebase.initializeApp();
   }

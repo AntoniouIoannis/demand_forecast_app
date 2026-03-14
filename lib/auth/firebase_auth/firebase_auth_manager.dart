@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,7 @@ class FirebaseAuthManager extends AuthManager
         JwtSignInManager,
         GithubSignInManager,
         PhoneSignInManager {
+  static const String _profileCollection = 'onhold_users';
   // Set when using phone verification (after phone number is provided).
   //String? _phoneAuthVerificationCode;
   // Set when using phone sign in in web mode (ignored otherwise).
@@ -149,7 +151,7 @@ class FirebaseAuthManager extends AuthManager
   ) =>
       _signInOrCreateAccount(
         context,
-        () => emailSignInFunc(email, password),
+        () => _signInWithEmailOrMergeAnonymous(email, password),
         'EMAIL',
       );
 
@@ -161,7 +163,7 @@ class FirebaseAuthManager extends AuthManager
   ) =>
       _signInOrCreateAccount(
         context,
-        () => emailCreateAccountFunc(email, password),
+        () => _createAccountOrLinkAnonymous(email, password),
         'EMAIL',
       );
 
@@ -318,5 +320,74 @@ class FirebaseAuthManager extends AuthManager
       );
       return null;
     }
+  }
+
+  Future<UserCredential?> _createAccountOrLinkAnonymous(
+    String email,
+    String password,
+  ) async {
+    final activeUser = FirebaseAuth.instance.currentUser;
+    if (activeUser != null && activeUser.isAnonymous) {
+      final credential = EmailAuthProvider.credential(
+        email: email.trim(),
+        password: password,
+      );
+      return activeUser.linkWithCredential(credential);
+    }
+
+    return emailCreateAccountFunc(email, password);
+  }
+
+  Future<UserCredential?> _signInWithEmailOrMergeAnonymous(
+    String email,
+    String password,
+  ) async {
+    final activeUser = FirebaseAuth.instance.currentUser;
+    if (activeUser == null || !activeUser.isAnonymous) {
+      return emailSignInFunc(email, password);
+    }
+
+    final anonymousUid = activeUser.uid;
+    final guestProfile = await _loadVisitorProfile(anonymousUid);
+    final userCredential = await emailSignInFunc(email, password);
+    final signedInUser = userCredential?.user;
+
+    if (signedInUser != null && guestProfile != null) {
+      await _mergeVisitorProfile(
+        anonymousUid: anonymousUid,
+        authenticatedUid: signedInUser.uid,
+        guestProfile: guestProfile,
+      );
+    }
+
+    return userCredential;
+  }
+
+  Future<Map<String, dynamic>?> _loadVisitorProfile(String uid) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection(_profileCollection)
+        .doc(uid)
+        .get();
+    return snapshot.data();
+  }
+
+  Future<void> _mergeVisitorProfile({
+    required String anonymousUid,
+    required String authenticatedUid,
+    required Map<String, dynamic> guestProfile,
+  }) async {
+    final mergedProfile = Map<String, dynamic>.from(guestProfile)
+      ..['uid'] = authenticatedUid
+      ..['userId'] = authenticatedUid
+      ..['previousAnonymousUid'] = anonymousUid
+      ..['isAnonymous'] = false
+      ..['status'] = 'authenticated'
+      ..['convertedAt'] = Timestamp.now()
+      ..['lastSeenAt'] = Timestamp.now();
+
+    await FirebaseFirestore.instance
+        .collection(_profileCollection)
+        .doc(authenticatedUid)
+        .set(mergedProfile, SetOptions(merge: true));
   }
 }

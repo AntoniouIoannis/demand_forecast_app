@@ -22,6 +22,7 @@ class WelcomeWidget extends StatefulWidget {
 }
 
 class _WelcomeWidgetState extends State<WelcomeWidget> {
+  static const String _profileCollection = 'onhold_users';
   static const List<String> _businessMarkets = <String>[
     'Retail',
     'Food & Beverage',
@@ -50,6 +51,10 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
   String? _selectedCountry;
   int? _selectedForecastHorizonDays;
   String? _anonymousUid;
+  bool _privacyConsentAccepted = false;
+  bool _profileWriteOk = false;
+  String _profileWriteStatus = 'not-started';
+  DateTime? _lastProfileWriteAt;
 
   @override
   void initState() {
@@ -57,9 +62,27 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     _bootstrapAnonymousSession();
   }
 
+  Future<User?> _restorePersistedAuthUser() async {
+    final current = FirebaseAuth.instance.currentUser;
+    if (current != null) {
+      return current;
+    }
+
+    try {
+      return await FirebaseAuth.instance
+          .authStateChanges()
+          .first
+          .timeout(const Duration(seconds: 2), onTimeout: () => null);
+    } catch (_) {
+      return FirebaseAuth.instance.currentUser;
+    }
+  }
+
   Future<void> _bootstrapAnonymousSession() async {
     try {
-      if (!loggedIn) {
+      final restoredUser = await _restorePersistedAuthUser();
+
+      if (restoredUser == null && !loggedIn) {
         final signedInUser = await authManager.signInAnonymously(context);
         if (signedInUser == null) {
           if (mounted) {
@@ -72,7 +95,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
         }
       }
 
-      final uid = currentUserUid;
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? currentUserUid;
       if (uid.isEmpty) {
         return;
       }
@@ -82,8 +105,15 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
         await _saveOrUpdateVisitorProfile(uid: uid);
       } on FirebaseException catch (e) {
         debugPrint(
-          'visitor_profiles bootstrap save failed: ${e.code} ${e.message}',
+          '$_profileCollection bootstrap save failed: ${e.code} ${e.message}',
         );
+        if (mounted) {
+          setState(() {
+            _profileWriteOk = false;
+            _profileWriteStatus = 'error:${e.code}';
+            _lastProfileWriteAt = DateTime.now().toUtc();
+          });
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Profile save skipped: ${e.code}')),
@@ -104,15 +134,31 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     final packageInfo = await PackageInfo.fromPlatform();
     final deviceInfo = await _collectDeviceInfo();
     final ipGeo = await _collectIpAndGeo();
+    final docRef =
+        FirebaseFirestore.instance.collection(_profileCollection).doc(uid);
+    final existingSnapshot = await docRef.get();
+    final existingData = existingSnapshot.data() ?? const <String, dynamic>{};
+
+    final firstSeenAt = existingData['firstSeenAt'] ??
+        existingData['entryAt'] ??
+        Timestamp.fromDate(now);
+    final isAnonymous = FirebaseAuth.instance.currentUser?.isAnonymous ?? true;
+    final consentAccepted =
+        _privacyConsentAccepted || existingData['consentAccepted'] == true;
 
     final doc = <String, dynamic>{
+      'uid': uid,
       'userId': uid,
-      'isAnonymous': FirebaseAuth.instance.currentUser?.isAnonymous ?? true,
-      'entryAt': Timestamp.fromDate(now),
+      'isAnonymous': isAnonymous,
+      'status': isAnonymous ? 'anonymous' : 'authenticated',
+      'firstSeenAt': firstSeenAt,
+      'entryAt': firstSeenAt,
       'lastSeenAt': Timestamp.fromDate(now),
       'market': _selectedMarket,
       'marketCountry': _selectedCountry,
       'forecastHorizonDays': _selectedForecastHorizonDays,
+      'consentAccepted': consentAccepted,
+      'profileWriteOk': true,
       'app': {
         'name': packageInfo.appName,
         'packageName': packageInfo.packageName,
@@ -133,10 +179,16 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
       'device': deviceInfo,
     };
 
-    await FirebaseFirestore.instance
-        .collection('visitor_profiles')
-        .doc(uid)
-        .set(doc, SetOptions(merge: true));
+    await docRef.set(doc, SetOptions(merge: true));
+    final verifiedSnapshot = await docRef.get();
+    if (mounted) {
+      setState(() {
+        _profileWriteOk = verifiedSnapshot.exists;
+        _profileWriteStatus =
+            verifiedSnapshot.exists ? 'saved' : 'not-found-after-write';
+        _lastProfileWriteAt = DateTime.now().toUtc();
+      });
+    }
   }
 
   Future<Map<String, dynamic>> _collectIpAndGeo() async {
@@ -265,8 +317,15 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
         await _saveOrUpdateVisitorProfile(uid: _anonymousUid!);
       } on FirebaseException catch (e) {
         debugPrint(
-          'visitor_profiles continue save failed: ${e.code} ${e.message}',
+          '$_profileCollection continue save failed: ${e.code} ${e.message}',
         );
+        if (mounted) {
+          setState(() {
+            _profileWriteOk = false;
+            _profileWriteStatus = 'error:${e.code}';
+            _lastProfileWriteAt = DateTime.now().toUtc();
+          });
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Profile save skipped: ${e.code}')),
@@ -310,8 +369,50 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     );
 
     if (accepted == true && mounted) {
+      _privacyConsentAccepted = true;
       await _continueToApp();
     }
+  }
+
+  Widget _buildAdminDebugPanel() {
+    final theme = FlutterFlowTheme.of(context);
+    final activeUser = FirebaseAuth.instance.currentUser;
+    final activeUid = activeUser?.uid ?? '-';
+    final isAnonymous = activeUser?.isAnonymous ?? false;
+    final lastWrite = _lastProfileWriteAt != null
+        ? DateFormat('yyyy-MM-dd HH:mm:ss').format(_lastProfileWriteAt!)
+        : '-';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 10.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: theme.primaryBackground,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: theme.alternate),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Admin Debug', style: theme.titleSmall),
+          const SizedBox(height: 8.0),
+          Text('active uid: $activeUid', style: theme.bodySmall),
+          Text('is anonymous: $isAnonymous', style: theme.bodySmall),
+          Text(
+            'profile path: $_profileCollection/${_anonymousUid ?? activeUid}',
+            style: theme.bodySmall,
+          ),
+          Text('profile write status: $_profileWriteStatus',
+              style: theme.bodySmall),
+          Text('profile exists after write: $_profileWriteOk',
+              style: theme.bodySmall),
+          Text('last profile write: $lastWrite', style: theme.bodySmall),
+          Text('privacy consent accepted: $_privacyConsentAccepted',
+              style: theme.bodySmall),
+        ],
+      ),
+    );
   }
 
   @override
@@ -391,6 +492,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                     'anonymous id: $_anonymousUid',
                                     style: theme.bodyMedium,
                                   ),
+                                _buildAdminDebugPanel(),
                                 const SizedBox(height: 24.0),
                                 Text(
                                   'select youe bussiness market',
