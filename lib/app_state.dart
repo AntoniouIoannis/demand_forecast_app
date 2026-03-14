@@ -31,4 +31,28 @@ class FFAppState extends ChangeNotifier {
   set passwordState(bool value) {
     _passwordState = value;
   }
+
+  String? _selectedBusinessMarket;
+  String? get selectedBusinessMarket => _selectedBusinessMarket;
+  set selectedBusinessMarket(String? value) {
+    _selectedBusinessMarket = value;
+  }
+
+  String? _selectedMarketCountry;
+  String? get selectedMarketCountry => _selectedMarketCountry;
+  set selectedMarketCountry(String? value) {
+    _selectedMarketCountry = value;
+  }
+
+  int? _forecastHorizonDays;
+  int? get forecastHorizonDays => _forecastHorizonDays;
+  set forecastHorizonDays(int? value) {
+    _forecastHorizonDays = value;
+  }
+
+  String? _forecastReferenceDateIso;
+  String? get forecastReferenceDateIso => _forecastReferenceDateIso;
+  set forecastReferenceDateIso(String? value) {
+    _forecastReferenceDateIso = value;
+  }
 }
