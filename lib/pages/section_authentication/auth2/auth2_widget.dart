@@ -303,7 +303,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                 fit: BoxFit.scaleDown,
                                 alignment: AlignmentDirectional(0.0, -1.0),
                                 image: Image.asset(
-                                  'assets/images/global.jpeg',
+                                  'assets/images/somon.jpg',
                                 ).image,
                               ),
                               boxShadow: [
