@@ -460,7 +460,7 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
                                   ),
                                   sideTitles: SideTitles(
                                     showTitles: true,
-                                    reservedSize: 34.0,
+                                    reservedSize: 64.0,
                                     interval: 1,
                                     getTitlesWidget: (value, meta) {
                                       final index = value.toInt();
@@ -471,10 +471,14 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
                                       return Padding(
                                         padding:
                                             const EdgeInsets.only(top: 6.0),
-                                        child: Text(
-                                          skuLabels[index],
-                                          style: FlutterFlowTheme.of(context)
-                                              .bodySmall,
+                                        child: Transform.rotate(
+                                          angle: -0.5,
+                                          child: Text(
+                                            skuLabels[index],
+                                            style: FlutterFlowTheme.of(context)
+                                                .bodySmall,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       );
                                     },
