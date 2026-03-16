@@ -49,6 +49,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
+              // ignore: deprecated_member_use
               color: color.withOpacity(0.4),
               blurRadius: 10.0,
               offset: const Offset(0.0, 4.0),
@@ -214,7 +215,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                       ),
                     ),
 
-                    const SizedBox(height: gridGap),
+                    SizedBox(height: gridGap),
 
                     // 2×2 grid of square tiles
                     if (isDesktop)
@@ -274,7 +275,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                         ],
                       ),
 
-                    const SizedBox(height: gridGap),
+                    SizedBox(height: gridGap),
 
                     // Horizontal tiles
                     _buildHorizontalTile(
@@ -283,7 +284,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                       color: const Color(0xFFAD1457),
                       onTap: () {},
                     ),
-                    const SizedBox(height: gridGap),
+                    SizedBox(height: gridGap),
                     _buildHorizontalTile(
                       label: 'Currency Exchange Rates',
                       icon: Icons.currency_exchange_rounded,
