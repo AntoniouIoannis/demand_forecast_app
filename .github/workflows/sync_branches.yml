@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - copilot/build-web-and-apk-app
+      - copilot/update-welcome-page-input-fields
   workflow_dispatch:
 
 permissions:
@@ -28,7 +29,7 @@ jobs:
         run: |
           SOURCE="${GITHUB_REF_NAME}"
           if [ "$SOURCE" = "main" ]; then
-            TARGET="copilot/build-web-and-apk-app"
+            TARGET="copilot/update-welcome-page-input-fields"
           else
             TARGET="main"
           fi
