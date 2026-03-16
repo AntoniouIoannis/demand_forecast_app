@@ -13,6 +13,7 @@ import 'firebase_user_provider.dart';
 import 'google_auth.dart';
 import 'jwt_token_auth.dart';
 import 'github_auth.dart';
+import 'yahoo_auth.dart';
 
 export '../base_auth_user_provider.dart';
 
@@ -47,6 +48,7 @@ class FirebaseAuthManager extends AuthManager
         AnonymousSignInManager,
         JwtSignInManager,
         GithubSignInManager,
+        YahooSignInManager,
         PhoneSignInManager {
   static const String _profileCollection = 'onhold_users';
   // Set when using phone verification (after phone number is provided).
@@ -184,6 +186,10 @@ class FirebaseAuthManager extends AuthManager
   @override
   Future<BaseAuthUser?> signInWithGithub(BuildContext context) =>
       _signInOrCreateAccount(context, githubSignInFunc, 'GITHUB');
+
+  @override
+  Future<BaseAuthUser?> signInWithYahoo(BuildContext context) =>
+      _signInOrCreateAccount(context, yahooSignInFunc, 'YAHOO');
 
   @override
   Future<BaseAuthUser?> signInWithJwtToken(
