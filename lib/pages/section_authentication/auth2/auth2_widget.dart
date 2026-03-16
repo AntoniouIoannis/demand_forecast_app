@@ -288,9 +288,11 @@ class _Auth2WidgetState extends State<Auth2Widget>
                           padding: EdgeInsets.all(12.0),
                           child: Container(
                             width: double.infinity,
-                            height: MediaQuery.sizeOf(context).width >= 768.0
-                                ? 530.0
-                                : 630.0,
+                            height: MediaQuery.sizeOf(context).width >= 1200.0
+                                ? 600.0
+                                : MediaQuery.sizeOf(context).width >= 768.0
+                                    ? 680.0
+                                    : 730.0,
                             constraints: BoxConstraints(
                               maxWidth: 570.0,
                             ),
@@ -1669,6 +1671,101 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                       ),
                                                                     ),
                                                                   ),
+                                                            Padding(
+                                                              padding:
+                                                                  EdgeInsetsDirectional
+                                                                      .fromSTEB(
+                                                                          0.0,
+                                                                          0.0,
+                                                                          0.0,
+                                                                          16.0),
+                                                              child:
+                                                                  FFButtonWidget(
+                                                                onPressed:
+                                                                    () async {
+                                                                  GoRouter.of(
+                                                                          context)
+                                                                      .prepareAuthEvent();
+                                                                  final user =
+                                                                      await authManager
+                                                                          .signInWithYahoo(
+                                                                              context);
+                                                                  if (user ==
+                                                                      null) {
+                                                                    return;
+                                                                  }
+
+                                                                  context.goNamedAuth(
+                                                                      ImportDataWidget
+                                                                          .routeName,
+                                                                      context
+                                                                          .mounted);
+                                                                },
+                                                                text:
+                                                                    'Continue with Yahoo',
+                                                                icon: FaIcon(
+                                                                  FontAwesomeIcons
+                                                                      .yahoo,
+                                                                  size: 20.0,
+                                                                ),
+                                                                options:
+                                                                    FFButtonOptions(
+                                                                  width: 230.0,
+                                                                  height: 44.0,
+                                                                  padding: EdgeInsetsDirectional
+                                                                      .fromSTEB(
+                                                                          0.0,
+                                                                          0.0,
+                                                                          0.0,
+                                                                          0.0),
+                                                                  iconPadding: EdgeInsetsDirectional
+                                                                      .fromSTEB(
+                                                                          0.0,
+                                                                          0.0,
+                                                                          0.0,
+                                                                          0.0),
+                                                                  color: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .secondaryBackground,
+                                                                  textStyle: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .bodyMedium
+                                                                      .override(
+                                                                        font: GoogleFonts
+                                                                            .inter(
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                          fontStyle: FlutterFlowTheme.of(context)
+                                                                              .bodyMedium
+                                                                              .fontStyle,
+                                                                        ),
+                                                                        letterSpacing:
+                                                                            0.0,
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        fontStyle: FlutterFlowTheme.of(context)
+                                                                            .bodyMedium
+                                                                            .fontStyle,
+                                                                      ),
+                                                                  elevation:
+                                                                      0.0,
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                    color: FlutterFlowTheme.of(
+                                                                            context)
+                                                                        .alternate,
+                                                                    width: 2.0,
+                                                                  ),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              40.0),
+                                                                  hoverColor: FlutterFlowTheme.of(
+                                                                          context)
+                                                                      .primaryBackground,
+                                                                ),
+                                                              ),
+                                                            ),
                                                           ],
                                                         ),
                                                       ),
@@ -1879,6 +1976,12 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                     24.0,
                                                                     0.0,
                                                                     24.0),
+                                                        prefixIcon: Icon(
+                                                          Icons
+                                                              .alternate_email_outlined,
+                                                          color:
+                                                              Color(0xFFB89431),
+                                                        ),
                                                       ),
                                                       style:
                                                           FlutterFlowTheme.of(
@@ -2032,6 +2135,11 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                     24.0,
                                                                     0.0,
                                                                     24.0),
+                                                        prefixIcon: Icon(
+                                                          Icons.password,
+                                                          color:
+                                                              Color(0xFFB89431),
+                                                        ),
                                                         suffixIcon: InkWell(
                                                           onTap: () =>
                                                               safeSetState(
@@ -2444,6 +2552,102 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                 ),
                                                               ),
                                                             ),
+                                                      Padding(
+                                                        padding:
+                                                            EdgeInsetsDirectional
+                                                                .fromSTEB(
+                                                                    0.0,
+                                                                    0.0,
+                                                                    0.0,
+                                                                    16.0),
+                                                        child: FFButtonWidget(
+                                                          onPressed: () async {
+                                                            GoRouter.of(context)
+                                                                .prepareAuthEvent();
+                                                            final user =
+                                                                await authManager
+                                                                    .signInWithYahoo(
+                                                                        context);
+                                                            if (user == null) {
+                                                              return;
+                                                            }
+
+                                                            context.goNamedAuth(
+                                                                ImportDataWidget
+                                                                    .routeName,
+                                                                context
+                                                                    .mounted);
+                                                          },
+                                                          text:
+                                                              'Continue with Yahoo',
+                                                          icon: FaIcon(
+                                                            FontAwesomeIcons
+                                                                .yahoo,
+                                                            size: 20.0,
+                                                          ),
+                                                          options:
+                                                              FFButtonOptions(
+                                                            width: 230.0,
+                                                            height: 44.0,
+                                                            padding:
+                                                                EdgeInsetsDirectional
+                                                                    .fromSTEB(
+                                                                        0.0,
+                                                                        0.0,
+                                                                        0.0,
+                                                                        0.0),
+                                                            iconPadding:
+                                                                EdgeInsetsDirectional
+                                                                    .fromSTEB(
+                                                                        0.0,
+                                                                        0.0,
+                                                                        0.0,
+                                                                        0.0),
+                                                            color: FlutterFlowTheme
+                                                                    .of(context)
+                                                                .secondaryBackground,
+                                                            textStyle:
+                                                                FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .bodyMedium
+                                                                    .override(
+                                                                      font: GoogleFonts
+                                                                          .inter(
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        fontStyle: FlutterFlowTheme.of(context)
+                                                                            .bodyMedium
+                                                                            .fontStyle,
+                                                                      ),
+                                                                      letterSpacing:
+                                                                          0.0,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontStyle: FlutterFlowTheme.of(
+                                                                              context)
+                                                                          .bodyMedium
+                                                                          .fontStyle,
+                                                                    ),
+                                                            elevation: 0.0,
+                                                            borderSide:
+                                                                BorderSide(
+                                                              color: FlutterFlowTheme
+                                                                      .of(context)
+                                                                  .alternate,
+                                                              width: 2.0,
+                                                            ),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        40.0),
+                                                            hoverColor:
+                                                                FlutterFlowTheme.of(
+                                                                        context)
+                                                                    .primaryBackground,
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ],
                                                   ),
                                                 ),
@@ -2458,20 +2662,65 @@ class _Auth2WidgetState extends State<Auth2Widget>
                                                                 0.0, 16.0),
                                                     child: FFButtonWidget(
                                                       onPressed: () async {
-                                                        GoRouter.of(context)
-                                                            .prepareAuthEvent();
-                                                        final user =
+                                                        final emailController =
+                                                            TextEditingController();
+                                                        try {
+                                                          final confirmed =
+                                                              await showDialog<bool>(
+                                                            context: context,
+                                                            builder: (ctx) =>
+                                                                AlertDialog(
+                                                              title: Text(
+                                                                  'Reset Password'),
+                                                              content:
+                                                                  TextField(
+                                                                controller:
+                                                                    emailController,
+                                                                keyboardType:
+                                                                    TextInputType
+                                                                        .emailAddress,
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  labelText:
+                                                                      'Enter your email',
+                                                                ),
+                                                              ),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () =>
+                                                                      Navigator.pop(
+                                                                          ctx,
+                                                                          false),
+                                                                  child:
+                                                                      Text('Cancel'),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed: () =>
+                                                                      Navigator.pop(
+                                                                          ctx,
+                                                                          true),
+                                                                  child: Text('Send'),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                          if (confirmed == true &&
+                                                              emailController
+                                                                  .text
+                                                                  .isNotEmpty) {
                                                             await authManager
-                                                                .signInWithGoogle(
-                                                                    context);
-                                                        if (user == null) {
-                                                          return;
+                                                                .resetPassword(
+                                                              email:
+                                                                  emailController
+                                                                      .text
+                                                                      .trim(),
+                                                              context: context,
+                                                            );
+                                                          }
+                                                        } finally {
+                                                          emailController
+                                                              .dispose();
                                                         }
-
-                                                        context.goNamedAuth(
-                                                            ImportDataWidget
-                                                                .routeName,
-                                                            context.mounted);
                                                       },
                                                       text: 'Forgot Password?',
                                                       options: FFButtonOptions(

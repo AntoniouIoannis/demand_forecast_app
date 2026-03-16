@@ -72,3 +72,7 @@ mixin MicrosoftSignInManager on AuthManager {
 mixin GithubSignInManager on AuthManager {
   Future<BaseAuthUser?> signInWithGithub(BuildContext context);
 }
+
+mixin YahooSignInManager on AuthManager {
+  Future<BaseAuthUser?> signInWithYahoo(BuildContext context);
+}
