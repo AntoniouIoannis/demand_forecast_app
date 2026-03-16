@@ -299,13 +299,6 @@ class _Auth2WidgetState extends State<Auth2Widget>
                             decoration: BoxDecoration(
                               color: FlutterFlowTheme.of(context)
                                   .secondaryBackground,
-                              image: DecorationImage(
-                                fit: BoxFit.scaleDown,
-                                alignment: AlignmentDirectional(0.0, -1.0),
-                                image: Image.asset(
-                                  'assets/images/profil_demo.jpg',
-                                ).image,
-                              ),
                               boxShadow: [
                                 BoxShadow(
                                   blurRadius: 4.0,
