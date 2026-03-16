@@ -31,3 +31,5 @@ export '/pages/section_main/sub_scriptions/sub_scriptions_widget.dart'
     show SubScriptionsWidget;
 export '/pages/section_main/howit_works/howit_works_widget.dart'
     show HowitWorksWidget;
+export '/pages/section_main/dashboard/dashboard_widget.dart'
+    show DashboardWidget;

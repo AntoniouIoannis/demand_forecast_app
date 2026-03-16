@@ -639,6 +639,35 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 12.0),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 56.0,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF6A1B9A),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                    ),
+                                    onPressed: context.mounted
+                                        ? () => context.pushNamed(
+                                              HomePageWidget.routeName,
+                                            )
+                                        : null,
+                                    icon: const Icon(Icons.dashboard_rounded,
+                                        size: 20.0),
+                                    label: const Text(
+                                      'Dashboard',
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                     ),

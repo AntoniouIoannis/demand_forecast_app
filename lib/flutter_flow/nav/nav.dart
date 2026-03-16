@@ -224,7 +224,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               name: HowitWorksWidget.routeName,
               path: HowitWorksWidget.routePath,
               builder: (context, params) => HowitWorksWidget(),
-            )
+            ),
+            FFRoute(
+              name: DashboardWidget.routeName,
+              path: DashboardWidget.routePath,
+              builder: (context, params) => DashboardWidget(),
+            ),
           ].map((r) => r.toRoute(appStateNotifier)).toList(),
         ),
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
