@@ -55,6 +55,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
   bool _profileWriteOk = false;
   String _profileWriteStatus = 'not-started';
   DateTime? _lastProfileWriteAt;
+  Map<String, dynamic>? _deviceInfo;
 
   @override
   void initState() {
@@ -133,6 +134,11 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     final now = DateTime.now().toUtc();
     final packageInfo = await PackageInfo.fromPlatform();
     final deviceInfo = await _collectDeviceInfo();
+    if (mounted) {
+      setState(() {
+        _deviceInfo = deviceInfo;
+      });
+    }
     final ipGeo = await _collectIpAndGeo();
     final docRef =
         FirebaseFirestore.instance.collection(_profileCollection).doc(uid);
@@ -415,6 +421,55 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     );
   }
 
+  Widget _buildDeviceInfoPanel() {
+    final info = _deviceInfo;
+    return Container(
+      margin: const EdgeInsets.only(top: 10.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 6.0,
+            offset: Offset(0.0, 2.0),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Device Info',
+            style: TextStyle(
+              fontSize: 13.0,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6A1B9A),
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          if (info == null)
+            const Text(
+              'collecting...',
+              style: TextStyle(fontSize: 11.0, color: Colors.grey),
+            )
+          else
+            ...info.entries.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 2.0),
+                child: Text(
+                  '${e.key}: ${e.value}',
+                  style: const TextStyle(fontSize: 11.0, color: Colors.black87),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
@@ -492,7 +547,14 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                     'anonymous id: $_anonymousUid',
                                     style: theme.bodyMedium,
                                   ),
-                                _buildAdminDebugPanel(),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: _buildAdminDebugPanel()),
+                                    const SizedBox(width: 12.0),
+                                    Expanded(child: _buildDeviceInfoPanel()),
+                                  ],
+                                ),
                                 const SizedBox(height: 24.0),
                                 Text(
                                   'Select your business market',
