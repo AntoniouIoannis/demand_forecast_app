@@ -100,6 +100,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
           borderRadius: BorderRadius.circular(14.0),
           boxShadow: [
             BoxShadow(
+              // ignore: deprecated_member_use
               color: color.withOpacity(0.4),
               blurRadius: 8.0,
               offset: const Offset(0.0, 3.0),
