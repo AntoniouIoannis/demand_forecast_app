@@ -139,8 +139,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
     // Grid configuration
     final double horizontalPadding = isDesktop ? 40.0 : 16.0;
     final double gridGap = 14.0;
-    final double availableWidth =
-        screenWidth - horizontalPadding * 2 - gridGap;
+    final double availableWidth = screenWidth - horizontalPadding * 2 - gridGap;
     final double tileSize = (availableWidth / 2).clamp(140.0, 280.0);
 
     return GestureDetector(
@@ -201,95 +200,201 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                     ),
                     const SizedBox(height: 24.0),
 
-                    // Large square "Forecast your products" button
-                    SizedBox(
-                      width: double.infinity,
-                      height: tileSize,
-                      child: _buildDashboardTile(
-                        label: 'Forecast your products',
-                        icon: Icons.auto_graph_rounded,
-                        color: const Color(0xFF6A1B9A),
-                        isLarge: true,
-                        onTap: () async {
-                          context.pushNamed(HomePageWidget.routeName);
-                        },
-                      ),
-                    ),
-
-                    SizedBox(height: gridGap),
-
-                    // 2×2 grid of square tiles
+                    // Main layout: Large "Forecast" on left, grid of 4 tiles on right (desktop) / stacked (mobile)
                     if (isDesktop)
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: tileSize * 0.75,
-                              child: _buildDashboardTile(
-                                label: 'Markets',
-                                icon: Icons.store_mall_directory_rounded,
-                                color: const Color(0xFF1565C0),
-                                onTap: () {},
-                              ),
+                          // Left: Large "Forecast your products" button
+                          SizedBox(
+                            width: tileSize,
+                            height: tileSize,
+                            child: _buildDashboardTile(
+                              label: 'Forecast your products',
+                              icon: Icons.auto_graph_rounded,
+                              color: const Color(0xFF6A1B9A),
+                              isLarge: true,
+                              onTap: () async {
+                                context.pushNamed(HomePageWidget.routeName);
+                              },
                             ),
                           ),
-                          SizedBox(width: gridGap),
+                          SizedBox(width: gridGap * 2),
+                          // Right: 2×2 grid of tiles
                           Expanded(
-                            child: SizedBox(
-                              height: tileSize * 0.75,
-                              child: _buildDashboardTile(
-                                label: 'Stock Exchange',
-                                icon: Icons.candlestick_chart_rounded,
-                                color: const Color(0xFF00695C),
-                                onTap: () {},
-                              ),
+                            child: Column(
+                              children: [
+                                // Top row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: tileSize * 0.4,
+                                        child: _buildDashboardTile(
+                                          label: 'Markets',
+                                          icon: Icons
+                                              .store_mall_directory_rounded,
+                                          color: const Color(0xFF1565C0),
+                                          onTap: () {},
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: gridGap),
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: tileSize * 0.4,
+                                        child: _buildDashboardTile(
+                                          label: 'Stock Exchange',
+                                          icon: Icons.candlestick_chart_rounded,
+                                          color: const Color(0xFF00695C),
+                                          onTap: () {},
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: gridGap),
+                                // Bottom row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: tileSize * 0.4,
+                                        child: _buildDashboardTile(
+                                          label: 'Seasonal Calendar',
+                                          icon: Icons.calendar_month_rounded,
+                                          color: const Color(0xFFAD1457),
+                                          onTap: () {},
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: gridGap),
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: tileSize * 0.4,
+                                        child: _buildDashboardTile(
+                                          label: 'Currency Exchange Rates',
+                                          icon: Icons.currency_exchange_rounded,
+                                          color: const Color(0xFFF57F17),
+                                          onTap: () {},
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       )
                     else
-                      Row(
+                      Column(
                         children: [
-                          Expanded(
-                            child: AspectRatio(
-                              aspectRatio: 1.0,
-                              child: _buildDashboardTile(
-                                label: 'Markets',
-                                icon: Icons.store_mall_directory_rounded,
-                                color: const Color(0xFF1565C0),
-                                onTap: () {},
-                              ),
+                          // Mobile: Stacked layout
+                          SizedBox(
+                            width: double.infinity,
+                            height: tileSize,
+                            child: _buildDashboardTile(
+                              label: 'Forecast your products',
+                              icon: Icons.auto_graph_rounded,
+                              color: const Color(0xFF6A1B9A),
+                              isLarge: true,
+                              onTap: () async {
+                                context.pushNamed(HomePageWidget.routeName);
+                              },
                             ),
                           ),
-                          SizedBox(width: gridGap),
-                          Expanded(
-                            child: AspectRatio(
-                              aspectRatio: 1.0,
-                              child: _buildDashboardTile(
-                                label: 'Stock Exchange',
-                                icon: Icons.candlestick_chart_rounded,
-                                color: const Color(0xFF00695C),
-                                onTap: () {},
+                          SizedBox(height: gridGap),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label: 'Markets',
+                                    icon: Icons.store_mall_directory_rounded,
+                                    color: const Color(0xFF1565C0),
+                                    onTap: () {},
+                                  ),
+                                ),
                               ),
-                            ),
+                              SizedBox(width: gridGap),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label: 'Stock Exchange',
+                                    icon: Icons.candlestick_chart_rounded,
+                                    color: const Color(0xFF00695C),
+                                    onTap: () {},
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: gridGap),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label: 'Seasonal Calendar',
+                                    icon: Icons.calendar_month_rounded,
+                                    color: const Color(0xFFAD1457),
+                                    onTap: () {},
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: gridGap),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label: 'Currency Exchange Rates',
+                                    icon: Icons.currency_exchange_rounded,
+                                    color: const Color(0xFFF57F17),
+                                    onTap: () {},
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
 
-                    SizedBox(height: gridGap),
+                    const SizedBox(height: 32.0),
 
-                    // Horizontal tiles
+                    // New feature section: App Info, Team, Security
+                    Text(
+                      'More Info',
+                      style: GoogleFonts.interTight(
+                        color: theme.primaryText,
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+
                     _buildHorizontalTile(
-                      label: 'Seasonal Calendar',
-                      icon: Icons.calendar_month_rounded,
-                      color: const Color(0xFFAD1457),
+                      label: 'About App (under the hood!!)',
+                      icon: Icons.info_rounded,
+                      color: const Color(0xFF7B1FA2),
                       onTap: () {},
                     ),
                     SizedBox(height: gridGap),
                     _buildHorizontalTile(
-                      label: 'Currency Exchange Rates',
-                      icon: Icons.currency_exchange_rounded,
-                      color: const Color(0xFFF57F17),
+                      label: 'Team (Your coders)',
+                      icon: Icons.groups_rounded,
+                      color: const Color(0xFF0288D1),
+                      onTap: () {},
+                    ),
+                    SizedBox(height: gridGap),
+                    _buildHorizontalTile(
+                      label:
+                          'Secure your info (kerveros protect your business privacy)',
+                      icon: Icons.security_rounded,
+                      color: const Color(0xFFD32F2F),
                       onTap: () {},
                     ),
 

@@ -56,11 +56,15 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
   String _profileWriteStatus = 'not-started';
   DateTime? _lastProfileWriteAt;
   Map<String, dynamic>? _deviceInfo;
+  bool _privacyMessageShown = false;
 
   @override
   void initState() {
     super.initState();
     _bootstrapAnonymousSession();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showPrivacyMessageOnLoad();
+    });
   }
 
   Future<User?> _restorePersistedAuthUser() async {
@@ -350,10 +354,12 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     }
   }
 
-  Future<void> _showPrivacyMessageThenContinue() async {
-    if (_submitting) {
+  Future<void> _showPrivacyMessageOnLoad() async {
+    if (!mounted || _privacyMessageShown) {
       return;
     }
+
+    _privacyMessageShown = true;
 
     final accepted = await showDialog<bool>(
       context: context,
@@ -377,9 +383,56 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     );
 
     if (accepted == true && mounted) {
-      _privacyConsentAccepted = true;
-      await _continueToApp();
+      setState(() {
+        _privacyConsentAccepted = true;
+      });
     }
+  }
+
+  Widget _buildInfoCard({
+    required String title,
+    required List<MapEntry<String, String>> entries,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 10.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 6.0,
+            offset: Offset(0.0, 2.0),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13.0,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6A1B9A),
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          ...entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 2.0),
+              child: Text(
+                '${entry.key}: ${entry.value}',
+                style: const TextStyle(fontSize: 11.0, color: Colors.black87),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAdminDebugPanel() {
@@ -423,52 +476,76 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
     );
   }
 
+  Widget _buildSessionInfoPanel() {
+    final info = _deviceInfo;
+    final entries = <MapEntry<String, String>>[
+      MapEntry('sessionType', kIsWeb ? 'browser' : 'native-app'),
+      MapEntry('targetPlatform', defaultTargetPlatform.name),
+      MapEntry(
+        'locale',
+        PlatformDispatcher.instance.locale.toLanguageTag(),
+      ),
+    ];
+
+    if (info == null) {
+      entries.add(const MapEntry('status', 'collecting...'));
+    } else if (kIsWeb) {
+      entries.add(MapEntry('browser', '${info['browserName'] ?? '-'}'));
+      entries.add(MapEntry('hostPlatform', '${info['platform'] ?? '-'}'));
+      entries.add(MapEntry('browserLanguage', '${info['language'] ?? '-'}'));
+    } else {
+      entries.add(MapEntry('devicePlatform', defaultTargetPlatform.name));
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        entries.add(MapEntry('brand', '${info['brand'] ?? '-'}'));
+        entries.add(MapEntry('model', '${info['model'] ?? '-'}'));
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        entries.add(MapEntry('systemName', '${info['systemName'] ?? '-'}'));
+        entries.add(MapEntry('model', '${info['model'] ?? '-'}'));
+      } else if (defaultTargetPlatform == TargetPlatform.windows) {
+        entries.add(MapEntry('productName', '${info['productName'] ?? '-'}'));
+        entries.add(MapEntry('computerName', '${info['computerName'] ?? '-'}'));
+      }
+    }
+
+    return _buildInfoCard(title: 'Session Info', entries: entries);
+  }
+
   Widget _buildDeviceInfoPanel() {
     final info = _deviceInfo;
-    return Container(
-      margin: const EdgeInsets.only(top: 10.0),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 6.0,
-            offset: Offset(0.0, 2.0),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Device Info',
-            style: TextStyle(
-              fontSize: 13.0,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF6A1B9A),
-            ),
-          ),
-          const SizedBox(height: 8.0),
-          if (info == null)
-            const Text(
-              'collecting...',
-              style: TextStyle(fontSize: 11.0, color: Colors.grey),
-            )
-          else
-            ...info.entries.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 2.0),
-                child: Text(
-                  '${e.key}: ${e.value}',
-                  style: const TextStyle(fontSize: 11.0, color: Colors.black87),
-                ),
-              ),
-            ),
-        ],
-      ),
+    final entries = info == null
+        ? const <MapEntry<String, String>>[
+            MapEntry('status', 'collecting...'),
+          ]
+        : info.entries.map((e) => MapEntry('${e.key}', '${e.value}')).toList();
+
+    return _buildInfoCard(title: 'Device Info', entries: entries);
+  }
+
+  Widget _buildDiagnosticsPanels() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 900.0;
+        final panels = <Widget>[
+          _buildSessionInfoPanel(),
+          _buildAdminDebugPanel(),
+          _buildDeviceInfoPanel(),
+        ];
+
+        if (isNarrow) {
+          return Column(children: panels);
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: panels[0]),
+            const SizedBox(width: 12.0),
+            Expanded(child: panels[1]),
+            const SizedBox(width: 12.0),
+            Expanded(child: panels[2]),
+          ],
+        );
+      },
     );
   }
 
@@ -549,14 +626,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                     'anonymous id: $_anonymousUid',
                                     style: theme.bodyMedium,
                                   ),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(child: _buildAdminDebugPanel()),
-                                    const SizedBox(width: 12.0),
-                                    Expanded(child: _buildDeviceInfoPanel()),
-                                  ],
-                                ),
+                                _buildDiagnosticsPanels(),
                                 const SizedBox(height: 24.0),
                                 Text(
                                   'Select your business market',
@@ -687,7 +757,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                                       null ||
                                                   _submitting)
                                               ? null
-                                              : _showPrivacyMessageThenContinue,
+                                              : _continueToApp,
                                           child: _submitting
                                               ? const SizedBox(
                                                   height: 20.0,
@@ -718,7 +788,7 @@ class _WelcomeWidgetState extends State<WelcomeWidget> {
                                     ),
                                     onPressed: context.mounted
                                         ? () => context.pushNamed(
-                                              HomePageWidget.routeName,
+                                              DashboardWidget.routeName,
                                             )
                                         : null,
                                     icon: const Icon(Icons.dashboard_rounded,
