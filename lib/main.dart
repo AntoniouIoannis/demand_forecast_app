@@ -188,34 +188,34 @@ class _NavBarPageState extends State<NavBarPage> {
           items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(
-                Icons.home_outlined,
+                Icons.person_outline,
                 size: 24.0,
               ),
-              label: 'Home',
+              label: 'Account',
               tooltip: '',
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                Icons.home_outlined,
+                Icons.card_membership_outlined,
                 size: 24.0,
               ),
-              label: 'Home',
+              label: 'Subscriptions',
               tooltip: '',
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                Icons.home_outlined,
+                Icons.info_outline,
                 size: 24.0,
               ),
-              label: 'Home',
+              label: 'About',
               tooltip: '',
             ),
             BottomNavigationBarItem(
               icon: Icon(
-                Icons.location_history,
+                Icons.upload_file_outlined,
                 size: 24.0,
               ),
-              label: '',
+              label: 'Import',
               tooltip: '',
             ),
             BottomNavigationBarItem(
