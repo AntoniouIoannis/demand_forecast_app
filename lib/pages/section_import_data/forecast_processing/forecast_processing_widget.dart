@@ -76,6 +76,59 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
     });
   }
 
+  String _countryLabelForUi() {
+    final raw = FFAppState().selectedMarketCountry;
+    if (raw == null || raw.trim().isEmpty) {
+      return 'your market';
+    }
+    return raw.trim();
+  }
+
+  Widget _buildTransparencyPanel(String countryLabel) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 16.0),
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(color: const Color(0xFFD5DCE5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Live processing indicator',
+            style: FlutterFlowTheme.of(context).titleSmall,
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            'Processing dataset...',
+            style: FlutterFlowTheme.of(context).bodySmall,
+          ),
+          const SizedBox(height: 4.0),
+          Text(
+            'Building demand model for $countryLabel...',
+            style: FlutterFlowTheme.of(context).bodySmall,
+          ),
+          const SizedBox(height: 12.0),
+          Text(
+            'Data usage policy',
+            style: FlutterFlowTheme.of(context).titleSmall,
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            'We only request data needed to improve prediction.\n'
+            'We do not request data identifying the user.\n'
+            'Your uploaded data is used only for generating forecast models.\n'
+            'Files are not shared with third parties and can be deleted at any time.',
+            style: FlutterFlowTheme.of(context).bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openResults(List<ForecastRecord> results, String? sourceLabel) {
     if (_hasNavigatedToResults || !mounted) {
       return;
@@ -177,6 +230,7 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
   Widget _buildProcessingBody({
     required String title,
     required String subtitle,
+    required String countryLabel,
     VoidCallback? onContinue,
   }) {
     return Center(
@@ -215,6 +269,7 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
               style: FlutterFlowTheme.of(context).bodyLarge,
               textAlign: TextAlign.center,
             ),
+            _buildTransparencyPanel(countryLabel),
             _buildDebugPanel(onContinue: onContinue),
           ],
         ),
@@ -365,11 +420,13 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                           'Processing took too long or the forecast document is not accessible yet.',
                         );
                       }
+                      final countryLabel = _countryLabelForUi();
                       return _buildProcessingBody(
                         title: 'Processing forecast in Cloud Run...',
                         subtitle: widget.sourceLabel?.isNotEmpty == true
                             ? 'Source: ${widget.sourceLabel}'
                             : 'Waiting for backend processing to start',
+                        countryLabel: countryLabel,
                       );
                     }
 
@@ -381,6 +438,7 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                         (widget.sourceLabel?.isNotEmpty == true)
                             ? widget.sourceLabel
                             : data['source']?.toString();
+                    final countryLabel = _countryLabelForUi();
                     _recordDebugEvent(
                         'Firestore document received. status=$status');
 
@@ -413,6 +471,7 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                       return _buildProcessingBody(
                         title: 'Forecast completed',
                         subtitle: 'Preparing the results page...',
+                        countryLabel: countryLabel,
                         onContinue: widget.debugMode
                             ? () => _openResults(parsedResults, effectiveSource)
                             : null,
@@ -424,6 +483,7 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
                       subtitle: effectiveSource?.isNotEmpty == true
                           ? 'Source: $effectiveSource'
                           : 'Waiting for backend results',
+                      countryLabel: countryLabel,
                     );
                   },
                 ),

@@ -33,3 +33,4 @@ export '/pages/section_main/howit_works/howit_works_widget.dart'
     show HowitWorksWidget;
 export '/pages/section_main/dashboard/dashboard_widget.dart'
     show DashboardWidget;
+export '/pages/section_main/calendar/calendar_widget.dart' show CalendarWidget;

@@ -176,7 +176,17 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
       await _debugCheckpoint('Auth OK', 'Authenticated user: ${user.uid}');
       final userId = user.uid;
       final uploadId = const Uuid().v4();
+      final selectedCountryRaw = FFAppState().selectedMarketCountry;
+      final countryCode = _toCountryCode(selectedCountryRaw);
+      final selectedMarket =
+          (FFAppState().selectedBusinessMarket?.trim().isNotEmpty ?? false)
+              ? FFAppState().selectedBusinessMarket!.trim()
+              : 'Retail';
       await _debugCheckpoint('Upload ID Created', 'uploadId = $uploadId');
+      await _debugCheckpoint(
+        'Forecast Context',
+        'Country=$countryCode | Market=$selectedMarket',
+      );
 
       final storage = FirebaseStorage.instance;
       final selectedEntries = _filesBySlot.entries
@@ -240,6 +250,8 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
       final readyPayload = jsonEncode({
         'userId': userId,
         'uploadId': uploadId,
+        'country_code': countryCode,
+        'market': selectedMarket,
         'filesUploaded': filesUploaded,
         'selectedFileCount': selectedEntries.length,
         'files': uploadedFiles,
@@ -450,6 +462,32 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
 
   String _normalizeHeader(String value) =>
       value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  String _toCountryCode(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'US';
+    }
+    final normalized = value.trim().toUpperCase();
+    const map = <String, String>{
+      'GREECE': 'GR',
+      'CYPRUS': 'CY',
+      'ITALY': 'IT',
+      'GERMANY': 'DE',
+      'FRANCE': 'FR',
+      'SPAIN': 'ES',
+      'UNITED KINGDOM': 'GB',
+      'UNITED STATES': 'US',
+      'GR': 'GR',
+      'CY': 'CY',
+      'IT': 'IT',
+      'DE': 'DE',
+      'FR': 'FR',
+      'ES': 'ES',
+      'GB': 'GB',
+      'US': 'US',
+    };
+    return map[normalized] ?? normalized;
+  }
 
   int? _findColumnIndex(
     Map<String, int> normalizedIndexByHeader,
@@ -789,6 +827,18 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                           title: 'Upload behavior',
                           content:
                               'You can upload 1, 2, or 3 files.\nOnly uploaded files are used for training and forecast processing.\nFile names are dynamic and do not need a fixed naming pattern.',
+                        ),
+                        _buildHintCard(
+                          width: cardWidth,
+                          title: 'Local processing indicator',
+                          content:
+                              'After upload, status messages will appear live, for example:\nProcessing dataset...\nBuilding demand model for ${FFAppState().selectedMarketCountry ?? 'your market'}...',
+                        ),
+                        _buildHintCard(
+                          width: cardWidth,
+                          title: 'Data usage policy',
+                          content:
+                              'We only request data needed to improve prediction.\nWe do not request data identifying the user.\nYour uploaded data is used only for generating forecast models.\nFiles are not shared with third parties and can be deleted at any time.',
                         ),
                       ],
                     );

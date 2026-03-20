@@ -73,16 +73,16 @@ class AppStateNotifier extends ChangeNotifier {
 }
 
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-      initialLocation: '/welcome',
+      initialLocation: '/dashboard',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) => WelcomeWidget(),
+      errorBuilder: (context, state) => DashboardWidget(),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => WelcomeWidget(),
+          builder: (context, _) => DashboardWidget(),
           routes: [
             FFRoute(
               name: WelcomeWidget.routeName,
@@ -141,6 +141,13 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               builder: (context, params) => params.isEmpty
                   ? NavBarPage(initialPage: 'importData')
                   : TabimportdataWidget(),
+            ),
+            FFRoute(
+              name: CalendarWidget.routeName,
+              path: CalendarWidget.routePath,
+              builder: (context, params) => params.isEmpty
+                  ? NavBarPage(initialPage: 'Calendar')
+                  : CalendarWidget(),
             ),
             FFRoute(
               name: TabimportdataWidget.routeName,

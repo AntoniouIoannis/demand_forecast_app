@@ -161,6 +161,7 @@ class _NavBarPageState extends State<NavBarPage> {
       'subscript': SubscriptWidget(),
       'AboutApp': AboutAppWidget(),
       'importData': TabimportdataWidget(),
+      'Calendar': CalendarWidget(),
       'HomePage': HomePageWidget(),
     };
     final currentIndex = tabs.keys.toList().indexOf(_currentPageName);
@@ -216,6 +217,14 @@ class _NavBarPageState extends State<NavBarPage> {
                 size: 24.0,
               ),
               label: 'Import',
+              tooltip: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.calendar_month_outlined,
+                size: 24.0,
+              ),
+              label: 'Calendar',
               tooltip: '',
             ),
             BottomNavigationBarItem(

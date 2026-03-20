@@ -12,9 +12,11 @@ import os
 import tempfile
 
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from forecast_engine import run_optimized_forecast
 from google.cloud import firestore, storage
+from holidays_db import init_holidays_db, query_holidays
 
 DEFAULT_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -37,9 +39,7 @@ def _get_allowed_origins():
         return DEFAULT_ALLOWED_ORIGINS
 
     return [
-        origin.strip()
-        for origin in configured_origins.split(",")
-        if origin.strip()
+        origin.strip() for origin in configured_origins.split(",") if origin.strip()
     ]
 
 
@@ -56,6 +56,9 @@ CORS(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize local holiday database.
+init_holidays_db(logger)
+
 # Initialize Google Cloud clients
 try:
     STORAGE_CLIENT = storage.Client()
@@ -70,6 +73,34 @@ except Exception as e:
 def health_check():
     """Health check endpoint to verify service is running."""
     return "Demand Forecast API is Running!", 200
+
+
+@app.route("/holidays", methods=["GET"])
+def get_holidays():
+    """Return holiday events with optional filters."""
+    country_code = request.args.get("country_code", type=str)
+    event_type = request.args.get("event_type", type=str)
+    category = request.args.get("category", type=str)
+    from_date = request.args.get("from_date", type=str)
+    to_date = request.args.get("to_date", type=str)
+    limit = request.args.get("limit", default=200, type=int)
+
+    try:
+        items = query_holidays(
+            country_code=country_code,
+            event_type=event_type,
+            category=category,
+            from_date=from_date,
+            to_date=to_date,
+            limit=limit,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        logger.error("Failed to query holidays: %s", exc)
+        return jsonify({"error": "Failed to query holidays"}), 500
+
+    return jsonify({"count": len(items), "items": items}), 200
 
 
 @app.route("/pubsub", methods=["POST"])
@@ -182,7 +213,20 @@ def process_storage_event(data):
     )
 
     try:
-        results = run_forecast_logic(bucket, folder_path, expected_files)
+        # Extract country_code and market from READY payload or use defaults
+        # These would ideally come from user profile/app state
+        country_code = ready_payload.get("country_code", "US")
+        market = ready_payload.get("market", "Retail")
+
+        forecast_data = run_forecast_logic(
+            bucket,
+            folder_path,
+            expected_files,
+            country_code=country_code,
+            market=market,
+        )
+        results = forecast_data["results"]
+        metadata = forecast_data["metadata"]
 
         # Save a durable results artifact in the received-files bucket.
         results_bucket_name = os.environ.get("RESULTS_BUCKET", "bucket-received-files")
@@ -196,6 +240,7 @@ def process_storage_event(data):
                     "uploadId": upload_id,
                     "source": folder_path,
                     "results": results,
+                    "metadata": metadata,
                 },
                 ensure_ascii=False,
             ),
@@ -209,6 +254,7 @@ def process_storage_event(data):
                 "uploadId": upload_id,
                 "status": "completed",
                 "results": results,
+                "metadata": metadata,
                 "source": folder_path,
                 "sourceFiles": [
                     file_info.get("originalName")
@@ -239,8 +285,15 @@ def process_storage_event(data):
     return "Forecast processed successfully.", 200
 
 
-def run_forecast_logic(bucket, folder_path, files):
-    """Load the mapped yearly files from Cloud Storage and build forecast rows."""
+def run_forecast_logic(
+    bucket, folder_path, files, country_code: str = "US", market: str = "Retail"
+):
+    """
+    Load mapped files and run optimized forecast with:
+    - Daily → Weekly aggregation for efficiency
+    - Model caching and reuse
+    - Linear regression with Firestore results storage
+    """
     data_frames = []
 
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -276,28 +329,37 @@ def run_forecast_logic(bucket, folder_path, files):
         raise ValueError("No data frames created")
 
     full_df = pd.concat(data_frames, ignore_index=True)
-
-    # Logic (Same as before)
-    full_df["month"] = full_df["shipped"].dt.month
-    monthly_avg = (
-        full_df.groupby(["product_id", "month"])["ordered_qty"].mean().reset_index()
+    logger.info(
+        "Loaded %s records from %s files. Running optimized forecast for %s/%s...",
+        len(full_df),
+        len(files),
+        country_code,
+        market,
     )
 
-    forecast_year = int(full_df["shipped"].dt.year.max()) + 1
-    results = []
+    # Run optimized forecast with aggregation, model caching, and reuse
+    forecast_result = run_optimized_forecast(
+        full_df,
+        country_code=country_code,
+        market=market,
+        forecast_periods_count=12,
+        use_aggregation=True,
+    )
 
-    for _, row in monthly_avg.iterrows():
-        results.append(
-            {
-                "product_id": str(row["product_id"]),
-                "month_year": f"{forecast_year}-{int(row['month']):02d}",
-                "forecast_qty": round(float(row["ordered_qty"]), 2),
-            }
-        )
+    if forecast_result["status"] != "success":
+        logger.error("Forecast failed: %s", forecast_result.get("error"))
+        raise ValueError(forecast_result.get("error", "Unknown forecast error"))
 
-    # Sort results
-    results.sort(key=lambda x: (x["product_id"], x["month_year"]))
-    return results
+    results = forecast_result["results"]
+    metadata = forecast_result["metadata"]
+
+    logger.info(
+        "Forecast complete. Generated %s periods. Model R²=%s",
+        len(results),
+        metadata.get("model_r_squared", "N/A"),
+    )
+
+    return {"results": results, "metadata": metadata}
 
 
 if __name__ == "__main__":
