@@ -123,6 +123,24 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               builder: (context, params) => Sub2Widget(),
             ),
             FFRoute(
+              name: SubscriptionPlansWidget.routeName,
+              path: SubscriptionPlansWidget.routePath,
+              requireAuth: true,
+              builder: (context, params) => SubscriptionPlansWidget(),
+            ),
+            FFRoute(
+              name: TokenWalletWidget.routeName,
+              path: TokenWalletWidget.routePath,
+              requireAuth: true,
+              builder: (context, params) => TokenWalletWidget(),
+            ),
+            FFRoute(
+              name: ForecastUxLabWidget.routeName,
+              path: ForecastUxLabWidget.routePath,
+              requireAuth: true,
+              builder: (context, params) => ForecastUxLabWidget(),
+            ),
+            FFRoute(
               name: RateUsWidget.routeName,
               path: RateUsWidget.routePath,
               builder: (context, params) => RateUsWidget(),

@@ -8,6 +8,12 @@ export '/pages/section_demostration_app/demostration_app/demostration_app_widget
 export '/pages/section_subscriptions/subscript/subscript_widget.dart'
     show SubscriptWidget;
 export '/pages/section_subscriptions/sub2/sub2_widget.dart' show Sub2Widget;
+export '/pages/section_subscriptions/plans/plans_widget.dart'
+    show SubscriptionPlansWidget;
+export '/pages/section_subscriptions/token_wallet/token_wallet_widget.dart'
+    show TokenWalletWidget;
+export '/pages/section_subscriptions/forecast_ux_lab/forecast_ux_lab_widget.dart'
+    show ForecastUxLabWidget;
 export '/pages/section_about_rate_us/rate_us/rate_us_widget.dart'
     show RateUsWidget;
 export '/pages/section_about_rate_us/about_app/about_app_widget.dart'

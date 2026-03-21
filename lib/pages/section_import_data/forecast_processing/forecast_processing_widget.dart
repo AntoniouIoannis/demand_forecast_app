@@ -1,4 +1,5 @@
 import '/backend/forecast/forecast_models.dart';
+import '/backend/forecast/forecast_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -396,97 +397,101 @@ class _ForecastProcessingWidgetState extends State<ForecastProcessingWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: uploadId == null || uploadId.isEmpty
-              ? _buildFailedBody('Missing upload request id.')
-              : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('forecasts')
-                      .doc(uploadId)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      _recordDebugEvent(
-                          'Firestore snapshot error: ${snapshot.error}');
-                      return _buildFailedBody(
-                        'Error while reading processing status: ${snapshot.error}',
-                      );
-                    }
+          child: !ForecastConfig.forecastingEnabled
+              ? _buildFailedBody(ForecastConfig.forecastingPausedMessage)
+              : uploadId == null || uploadId.isEmpty
+                  ? _buildFailedBody('Missing upload request id.')
+                  : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: FirebaseFirestore.instance
+                          .collection('forecasts')
+                          .doc(uploadId)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          _recordDebugEvent(
+                              'Firestore snapshot error: ${snapshot.error}');
+                          return _buildFailedBody(
+                            'Error while reading processing status: ${snapshot.error}',
+                          );
+                        }
 
-                    if (!snapshot.hasData || !snapshot.data!.exists) {
-                      _recordDebugEvent(
-                          'Waiting for forecasts/${widget.uploadId} document');
-                      if (_hasTimedOut) {
-                        return _buildFailedBody(
-                          'Processing took too long or the forecast document is not accessible yet.',
+                        if (!snapshot.hasData || !snapshot.data!.exists) {
+                          _recordDebugEvent(
+                              'Waiting for forecasts/${widget.uploadId} document');
+                          if (_hasTimedOut) {
+                            return _buildFailedBody(
+                              'Processing took too long or the forecast document is not accessible yet.',
+                            );
+                          }
+                          final countryLabel = _countryLabelForUi();
+                          return _buildProcessingBody(
+                            title: 'Processing forecast in Cloud Run...',
+                            subtitle: widget.sourceLabel?.isNotEmpty == true
+                                ? 'Source: ${widget.sourceLabel}'
+                                : 'Waiting for backend processing to start',
+                            countryLabel: countryLabel,
+                          );
+                        }
+
+                        final data = snapshot.data!.data() ?? {};
+                        final status = (data['status'] ?? 'processing')
+                            .toString()
+                            .toLowerCase();
+                        final effectiveSource =
+                            (widget.sourceLabel?.isNotEmpty == true)
+                                ? widget.sourceLabel
+                                : data['source']?.toString();
+                        final countryLabel = _countryLabelForUi();
+                        _recordDebugEvent(
+                            'Firestore document received. status=$status');
+
+                        if (status == 'failed') {
+                          _recordDebugEvent(
+                            'Backend reported failure: ${data['error']?.toString() ?? 'Unknown backend error.'}',
+                          );
+                          return _buildFailedBody(
+                            data['error']?.toString() ??
+                                'Unknown backend error.',
+                          );
+                        }
+
+                        final rawResults = data['results'];
+                        final parsedResults = rawResults is List
+                            ? rawResults
+                                .whereType<Map>()
+                                .map((item) => ForecastRecord.fromMap(
+                                      Map<String, dynamic>.from(item),
+                                    ))
+                                .toList(growable: false)
+                            : const <ForecastRecord>[];
+
+                        if (status == 'completed' && parsedResults.isNotEmpty) {
+                          _recordDebugEvent(
+                            'Results ready. ${parsedResults.length} rows received from Firestore.',
+                          );
+                          if (!widget.debugMode) {
+                            _openResults(parsedResults, effectiveSource);
+                          }
+                          return _buildProcessingBody(
+                            title: 'Forecast completed',
+                            subtitle: 'Preparing the results page...',
+                            countryLabel: countryLabel,
+                            onContinue: widget.debugMode
+                                ? () =>
+                                    _openResults(parsedResults, effectiveSource)
+                                : null,
+                          );
+                        }
+
+                        return _buildProcessingBody(
+                          title: 'Processing forecast in Cloud Run...',
+                          subtitle: effectiveSource?.isNotEmpty == true
+                              ? 'Source: $effectiveSource'
+                              : 'Waiting for backend results',
+                          countryLabel: countryLabel,
                         );
-                      }
-                      final countryLabel = _countryLabelForUi();
-                      return _buildProcessingBody(
-                        title: 'Processing forecast in Cloud Run...',
-                        subtitle: widget.sourceLabel?.isNotEmpty == true
-                            ? 'Source: ${widget.sourceLabel}'
-                            : 'Waiting for backend processing to start',
-                        countryLabel: countryLabel,
-                      );
-                    }
-
-                    final data = snapshot.data!.data() ?? {};
-                    final status = (data['status'] ?? 'processing')
-                        .toString()
-                        .toLowerCase();
-                    final effectiveSource =
-                        (widget.sourceLabel?.isNotEmpty == true)
-                            ? widget.sourceLabel
-                            : data['source']?.toString();
-                    final countryLabel = _countryLabelForUi();
-                    _recordDebugEvent(
-                        'Firestore document received. status=$status');
-
-                    if (status == 'failed') {
-                      _recordDebugEvent(
-                        'Backend reported failure: ${data['error']?.toString() ?? 'Unknown backend error.'}',
-                      );
-                      return _buildFailedBody(
-                        data['error']?.toString() ?? 'Unknown backend error.',
-                      );
-                    }
-
-                    final rawResults = data['results'];
-                    final parsedResults = rawResults is List
-                        ? rawResults
-                            .whereType<Map>()
-                            .map((item) => ForecastRecord.fromMap(
-                                  Map<String, dynamic>.from(item),
-                                ))
-                            .toList(growable: false)
-                        : const <ForecastRecord>[];
-
-                    if (status == 'completed' && parsedResults.isNotEmpty) {
-                      _recordDebugEvent(
-                        'Results ready. ${parsedResults.length} rows received from Firestore.',
-                      );
-                      if (!widget.debugMode) {
-                        _openResults(parsedResults, effectiveSource);
-                      }
-                      return _buildProcessingBody(
-                        title: 'Forecast completed',
-                        subtitle: 'Preparing the results page...',
-                        countryLabel: countryLabel,
-                        onContinue: widget.debugMode
-                            ? () => _openResults(parsedResults, effectiveSource)
-                            : null,
-                      );
-                    }
-
-                    return _buildProcessingBody(
-                      title: 'Processing forecast in Cloud Run...',
-                      subtitle: effectiveSource?.isNotEmpty == true
-                          ? 'Source: $effectiveSource'
-                          : 'Waiting for backend results',
-                      countryLabel: countryLabel,
-                    );
-                  },
-                ),
+                      },
+                    ),
         ),
       ),
     );

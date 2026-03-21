@@ -1,6 +1,7 @@
 import 'dart:convert';
 //import 'dart:typed_data';
 
+import '/backend/forecast/forecast_config.dart';
 import '/backend/forecast/forecast_models.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -126,6 +127,18 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   }
 
   Future<void> _showUploadGuideThenSubmit() async {
+    if (!ForecastConfig.forecastingEnabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(ForecastConfig.forecastingPausedMessage),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     if (_isSubmitting || !_hasAtLeastOneFileSelected) {
       return;
     }
@@ -799,6 +812,27 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                   'Upload one, two, or three Excel files. The app processes only the files you upload.',
                   style: FlutterFlowTheme.of(context).bodyMedium,
                 ),
+                if (!ForecastConfig.forecastingEnabled) ...[
+                  const SizedBox(height: 10.0),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF4E5),
+                      borderRadius: BorderRadius.circular(10.0),
+                      border: Border.all(color: const Color(0xFFFFC107)),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Text(
+                        ForecastConfig.forecastingPausedMessage,
+                        style: TextStyle(
+                          color: Color(0xFF5F370E),
+                          fontSize: 13.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12.0),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -879,14 +913,18 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
                 _fileCard('file_slot_3'),
                 const SizedBox(height: 16.0),
                 FFButtonWidget(
-                  onPressed: (_hasAtLeastOneFileSelected && !_isSubmitting)
+                  onPressed: (ForecastConfig.forecastingEnabled &&
+                          _hasAtLeastOneFileSelected &&
+                          !_isSubmitting)
                       ? () async {
                           await _showUploadGuideThenSubmit();
                         }
                       : null,
                   text: _isSubmitting
                       ? 'Uploading & Preparing...'
-                      : 'Start Forecast Processing',
+                      : (ForecastConfig.forecastingEnabled
+                          ? 'Start Forecast Processing'
+                          : 'Forecast Processing Disabled'),
                   options: FFButtonOptions(
                     width: double.infinity,
                     height: 50.0,
