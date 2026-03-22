@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -108,51 +109,6 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                   fontWeight: FontWeight.w700,
                   height: 1.3,
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHorizontalTile({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 72.0,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(14.0),
-          boxShadow: [
-            BoxShadow(
-              // ignore: deprecated_member_use
-              color: color.withOpacity(0.4),
-              blurRadius: 8.0,
-              offset: const Offset(0.0, 3.0),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 26.0,
-            ),
-            const SizedBox(width: 14.0),
-            Text(
-              label,
-              style: GoogleFonts.interTight(
-                color: Colors.white,
-                fontSize: 16.0,
-                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -369,22 +325,125 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Welcome to your Dashboard',
-                      style: GoogleFonts.interTight(
-                        color: theme.primaryText,
-                        fontSize: 22.0,
-                        fontWeight: FontWeight.w700,
+                    if (isDesktop)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Welcome to your Dashboard',
+                                  style: GoogleFonts.interTight(
+                                    color: theme.primaryText,
+                                    fontSize: 22.0,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 6.0),
+                                Text(
+                                  'Choose a section to get started',
+                                  style: GoogleFonts.inter(
+                                    color: theme.secondaryText,
+                                    fontSize: 14.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 20.0),
+                          FFButtonWidget(
+                            onPressed: () async {
+                              context.pushNamed(Auth2Widget.routeName);
+                            },
+                            text: 'Sign Up / Log In',
+                            options: FFButtonOptions(
+                              height: 70.0,
+                              padding: const EdgeInsetsDirectional.fromSTEB(
+                                  16.0, 0.0, 16.0, 0.0),
+                              iconPadding: const EdgeInsetsDirectional.fromSTEB(
+                                  0.0, 0.0, 0.0, 0.0),
+                              color: theme.secondary,
+                              textStyle: theme.headlineMedium.override(
+                                font: GoogleFonts.interTight(
+                                  fontWeight: theme.headlineMedium.fontWeight,
+                                  fontStyle: theme.headlineMedium.fontStyle,
+                                ),
+                                color: theme.alternate,
+                                letterSpacing: 0.0,
+                                fontWeight: theme.headlineMedium.fontWeight,
+                                fontStyle: theme.headlineMedium.fontStyle,
+                              ),
+                              elevation: 0.0,
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(40.0),
+                                bottomRight: Radius.circular(0.0),
+                                topLeft: Radius.circular(0.0),
+                                topRight: Radius.circular(40.0),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome to your Dashboard',
+                            style: GoogleFonts.interTight(
+                              color: theme.primaryText,
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6.0),
+                          Text(
+                            'Choose a section to get started',
+                            style: GoogleFonts.inter(
+                              color: theme.secondaryText,
+                              fontSize: 14.0,
+                            ),
+                          ),
+                          const SizedBox(height: 14.0),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: FFButtonWidget(
+                              onPressed: () async {
+                                context.pushNamed(Auth2Widget.routeName);
+                              },
+                              text: 'Sign Up / Log In',
+                              options: FFButtonOptions(
+                                height: 70.0,
+                                padding: const EdgeInsetsDirectional.fromSTEB(
+                                    16.0, 0.0, 16.0, 0.0),
+                                iconPadding:
+                                    const EdgeInsetsDirectional.fromSTEB(
+                                        0.0, 0.0, 0.0, 0.0),
+                                color: theme.secondary,
+                                textStyle: theme.headlineMedium.override(
+                                  font: GoogleFonts.interTight(
+                                    fontWeight: theme.headlineMedium.fontWeight,
+                                    fontStyle: theme.headlineMedium.fontStyle,
+                                  ),
+                                  color: theme.alternate,
+                                  letterSpacing: 0.0,
+                                  fontWeight: theme.headlineMedium.fontWeight,
+                                  fontStyle: theme.headlineMedium.fontStyle,
+                                ),
+                                elevation: 0.0,
+                                borderRadius: const BorderRadius.only(
+                                  bottomLeft: Radius.circular(40.0),
+                                  bottomRight: Radius.circular(0.0),
+                                  topLeft: Radius.circular(0.0),
+                                  topRight: Radius.circular(40.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 6.0),
-                    Text(
-                      'Choose a section to get started',
-                      style: GoogleFonts.inter(
-                        color: theme.secondaryText,
-                        fontSize: 14.0,
-                      ),
-                    ),
                     const SizedBox(height: 20.0),
                     _buildSelectionCriteriaPanel(),
                     const SizedBox(height: 24.0),
@@ -404,7 +463,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                               color: const Color(0xFF6A1B9A),
                               isLarge: true,
                               onTap: () async {
-                                context.pushNamed(HomePageWidget.routeName);
+                                context.pushNamed(ImportDataWidget.routeName);
                               },
                             ),
                           ),
@@ -424,7 +483,8 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                           icon: Icons
                                               .store_mall_directory_rounded,
                                           color: const Color(0xFF1565C0),
-                                          onTap: () {},
+                                          onTap: () => context.pushNamed(
+                                              CalendarWidget.routeName),
                                         ),
                                       ),
                                     ),
@@ -436,7 +496,14 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                           label: 'Stock Exchange',
                                           icon: Icons.candlestick_chart_rounded,
                                           color: const Color(0xFF00695C),
-                                          onTap: () {},
+                                          onTap: () {
+                                            FFAppState().update(() {
+                                              FFAppState().exchangesInitialTab =
+                                                  1;
+                                            });
+                                            context.pushNamed(
+                                                ExchangesWidget.routeName);
+                                          },
                                         ),
                                       ),
                                     ),
@@ -466,7 +533,14 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                           label: 'Currency Exchange Rates',
                                           icon: Icons.currency_exchange_rounded,
                                           color: const Color(0xFFF57F17),
-                                          onTap: () {},
+                                          onTap: () {
+                                            FFAppState().update(() {
+                                              FFAppState().exchangesInitialTab =
+                                                  0;
+                                            });
+                                            context.pushNamed(
+                                                ExchangesWidget.routeName);
+                                          },
                                         ),
                                       ),
                                     ),
@@ -490,7 +564,7 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                               color: const Color(0xFF6A1B9A),
                               isLarge: true,
                               onTap: () async {
-                                context.pushNamed(HomePageWidget.routeName);
+                                context.pushNamed(ImportDataWidget.routeName);
                               },
                             ),
                           ),
@@ -504,7 +578,8 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                     label: 'Markets',
                                     icon: Icons.store_mall_directory_rounded,
                                     color: const Color(0xFF1565C0),
-                                    onTap: () {},
+                                    onTap: () => context
+                                        .pushNamed(CalendarWidget.routeName),
                                   ),
                                 ),
                               ),
@@ -516,7 +591,13 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                     label: 'Stock Exchange',
                                     icon: Icons.candlestick_chart_rounded,
                                     color: const Color(0xFF00695C),
-                                    onTap: () {},
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().exchangesInitialTab = 1;
+                                      });
+                                      context
+                                          .pushNamed(ExchangesWidget.routeName);
+                                    },
                                   ),
                                 ),
                               ),
@@ -545,7 +626,13 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                                     label: 'Currency Exchange Rates',
                                     icon: Icons.currency_exchange_rounded,
                                     color: const Color(0xFFF57F17),
-                                    onTap: () {},
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().exchangesInitialTab = 0;
+                                      });
+                                      context
+                                          .pushNamed(ExchangesWidget.routeName);
+                                    },
                                   ),
                                 ),
                               ),
@@ -566,28 +653,178 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                       ),
                     ),
                     const SizedBox(height: 12.0),
-
-                    _buildHorizontalTile(
-                      label: 'About App (under the hood!!)',
-                      icon: Icons.info_rounded,
-                      color: const Color(0xFF7B1FA2),
-                      onTap: () {},
-                    ),
-                    SizedBox(height: gridGap),
-                    _buildHorizontalTile(
-                      label: 'Team (Your coders)',
-                      icon: Icons.groups_rounded,
-                      color: const Color(0xFF0288D1),
-                      onTap: () {},
-                    ),
-                    SizedBox(height: gridGap),
-                    _buildHorizontalTile(
-                      label:
-                          'Secure your info (kerveros protect your business privacy)',
-                      icon: Icons.security_rounded,
-                      color: const Color(0xFFD32F2F),
-                      onTap: () {},
-                    ),
+                    if (isDesktop)
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: tileSize * 0.4,
+                                  child: _buildDashboardTile(
+                                    label: 'About App\n(Under the hood!)',
+                                    icon: Icons.info_rounded,
+                                    color: const Color(0xFF5D4037),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 0;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: gridGap),
+                              Expanded(
+                                child: SizedBox(
+                                  height: tileSize * 0.4,
+                                  child: _buildDashboardTile(
+                                    label: 'Team\n(Your Coders!)',
+                                    icon: Icons.groups_rounded,
+                                    color: const Color(0xFF546E7A),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 1;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: gridGap),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: tileSize * 0.4,
+                                  child: _buildDashboardTile(
+                                    label:
+                                        'Secure your info\n(Kerveros protect you!)',
+                                    icon: Icons.security_rounded,
+                                    color: const Color(0xFF455A64),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 2;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: gridGap),
+                              Expanded(
+                                child: SizedBox(
+                                  height: tileSize * 0.4,
+                                  child: _buildDashboardTile(
+                                    label:
+                                        'App Engine\n(A naturally aspirated V12 engine of App!)',
+                                    icon: Icons.token_rounded,
+                                    color: const Color(0xFF6D4C41),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 3;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    else
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label: 'About App\n(Under the hood!)',
+                                    icon: Icons.info_rounded,
+                                    color: const Color(0xFF5D4037),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 0;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: gridGap),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label: 'Team\n(Your Coders!)',
+                                    icon: Icons.groups_rounded,
+                                    color: const Color(0xFF546E7A),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 1;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: gridGap),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label:
+                                        'Secure your info\n(Kerveros protect you!)',
+                                    icon: Icons.security_rounded,
+                                    color: const Color(0xFF455A64),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 2;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: gridGap),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1.0,
+                                  child: _buildDashboardTile(
+                                    label:
+                                        'App Engine\n(A naturally aspirated V12 engine of App!)',
+                                    icon: Icons.token_rounded,
+                                    color: const Color(0xFF6D4C41),
+                                    onTap: () {
+                                      FFAppState().update(() {
+                                        FFAppState().aboutAppInitialTab = 3;
+                                      });
+                                      context
+                                          .pushNamed(AboutAppWidget.routeName);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
 
                     const SizedBox(height: 32.0),
                   ],

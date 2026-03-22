@@ -1,4 +1,8 @@
 {
+  "http.systemCertificates": false,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "C_Cpp_Runner.cCompilerPath": "C:/Program Files/dotnet/packs/Microsoft.NET.Runtime.Emscripten.3.1.56.Sdk.win-x64/10.0.1/tools/bin/clang.exe",
   "C_Cpp_Runner.cppCompilerPath": "C:/Program Files/dotnet/packs/Microsoft.NET.Runtime.Emscripten.3.1.56.Sdk.win-x64/10.0.1/tools/bin/clang++.exe",
   "C_Cpp_Runner.debuggerPath": "gdb",

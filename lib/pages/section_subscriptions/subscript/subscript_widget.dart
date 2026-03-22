@@ -1,9 +1,7 @@
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
-import '/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'subscript_model.dart';
@@ -80,76 +78,67 @@ class _SubscriptWidgetState extends State<SubscriptWidget> {
     );
   }
 
-  Widget _planCard({
+  Widget _buildSquareTile({
     required String title,
     required String subtitle,
-    required String price,
-    required List<String> bullets,
-    required bool selected,
-    required VoidCallback onSelect,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool selected = false,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14.0),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFE8F0FE) : Colors.white,
-        borderRadius: BorderRadius.circular(14.0),
-        border: Border.all(
-          color: selected ? const Color(0xFF1565C0) : const Color(0xFFD6DEEA),
-          width: selected ? 2.0 : 1.0,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: FlutterFlowTheme.of(context).titleMedium.override(
-                  font: GoogleFonts.interTight(
-                    fontWeight:
-                        FlutterFlowTheme.of(context).titleMedium.fontWeight,
-                    fontStyle:
-                        FlutterFlowTheme.of(context).titleMedium.fontStyle,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14.0),
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.14) : Colors.white,
+          borderRadius: BorderRadius.circular(14.0),
+          border: Border.all(
+            color: selected ? color : const Color(0xFFD6DEEA),
+            width: selected ? 2.0 : 1.0,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    // ignore: deprecated_member_use
+                    color: color.withValues(alpha: 0.28),
+                    blurRadius: 8.0,
+                    offset: const Offset(0.0, 3.0),
                   ),
-                  letterSpacing: 0.0,
-                ),
-          ),
-          const SizedBox(height: 4.0),
-          Text(price, style: FlutterFlowTheme.of(context).headlineSmall),
-          const SizedBox(height: 6.0),
-          Text(subtitle, style: FlutterFlowTheme.of(context).bodySmall),
-          const SizedBox(height: 8.0),
-          ...bullets.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Text('- $item',
-                  style: FlutterFlowTheme.of(context).bodySmall),
-            ),
-          ),
-          const SizedBox(height: 10.0),
-          FFButtonWidget(
-            onPressed: onSelect,
-            text: selected ? 'Selected' : 'Choose $title',
-            options: FFButtonOptions(
-              width: double.infinity,
-              height: 40.0,
-              color: selected
-                  ? const Color(0xFF1565C0)
-                  : FlutterFlowTheme.of(context).secondary,
-              textStyle: FlutterFlowTheme.of(context).bodyMedium.override(
-                    font: GoogleFonts.inter(
+                ]
+              : const [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28.0),
+            const SizedBox(height: 10.0),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: FlutterFlowTheme.of(context).titleSmall.override(
+                    font: GoogleFonts.interTight(
                       fontWeight:
-                          FlutterFlowTheme.of(context).bodyMedium.fontWeight,
+                          FlutterFlowTheme.of(context).titleSmall.fontWeight,
                       fontStyle:
-                          FlutterFlowTheme.of(context).bodyMedium.fontStyle,
+                          FlutterFlowTheme.of(context).titleSmall.fontStyle,
                     ),
-                    color: Colors.white,
                     letterSpacing: 0.0,
                   ),
-              borderRadius: BorderRadius.circular(8.0),
             ),
-          ),
-        ],
+            const SizedBox(height: 6.0),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: FlutterFlowTheme.of(context).bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -157,6 +146,10 @@ class _SubscriptWidgetState extends State<SubscriptWidget> {
   @override
   Widget build(BuildContext context) {
     final appState = FFAppState();
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final tileGap = screenWidth >= 700.0 ? 14.0 : 10.0;
+    final availableWidth = screenWidth - 32.0 - tileGap;
+    final tileSide = (availableWidth / 2.0).clamp(140.0, 280.0).toDouble();
     final userId = currentUserUid.isEmpty ? 'guest-user' : currentUserUid;
     final userEmail =
         currentUserEmail.isEmpty ? 'Not signed in' : currentUserEmail;
@@ -195,240 +188,252 @@ class _SubscriptWidgetState extends State<SubscriptWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14.0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0B3B6E), Color(0xFF1565C0)],
-                    ),
-                    borderRadius: BorderRadius.circular(14.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Auth User: $userId',
-                          style: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .override(color: Colors.white)),
-                      const SizedBox(height: 4.0),
-                      Text('Email: $userEmail',
-                          style: FlutterFlowTheme.of(context)
-                              .bodySmall
-                              .override(color: const Color(0xFFE6ECF5))),
-                      const SizedBox(height: 8.0),
-                      Text('Current Plan: ${appState.subscriptionPlan}',
-                          style: FlutterFlowTheme.of(context)
-                              .titleSmall
-                              .override(color: Colors.white)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12.0),
-                Text(
-                  'Pricing & Business Model',
-                  style: FlutterFlowTheme.of(context).titleMedium,
-                ),
-                const SizedBox(height: 8.0),
-                _planCard(
-                  title: 'Freemium',
-                  price: 'EUR 0 / month',
-                  subtitle: 'Single-SKU forecast free, fast onboarding.',
-                  bullets: const [
-                    'Up to 1 SKU per forecast',
-                    'Token wallet enabled',
-                    'Great for testing the flow',
-                  ],
-                  selected: appState.subscriptionPlan == 'Freemium',
-                  onSelect: () => _applyPlan('Freemium'),
-                ),
-                const SizedBox(height: 10.0),
-                _planCard(
-                  title: 'Starter',
-                  price: 'EUR 19 / month',
-                  subtitle: 'For small businesses up to 50 SKUs.',
-                  bullets: const [
-                    'Up to 50 SKUs',
-                    'Higher monthly token limit',
-                    'Ideal for regular weekly forecasts',
-                  ],
-                  selected: appState.subscriptionPlan == 'Starter',
-                  onSelect: () => _applyPlan('Starter'),
-                ),
-                const SizedBox(height: 10.0),
-                _planCard(
-                  title: 'Pro',
-                  price: 'EUR 59 / month',
-                  subtitle: 'API access, batch uploads, custom models.',
-                  bullets: const [
-                    'API access enabled',
-                    'Batch uploads enabled',
-                    'Custom model configuration',
-                  ],
-                  selected: appState.subscriptionPlan == 'Pro',
-                  onSelect: () => _applyPlan('Pro'),
-                ),
-                const SizedBox(height: 10.0),
-                _planCard(
-                  title: 'Consulting',
-                  price: 'Custom pricing',
-                  subtitle: 'Personalized forecasting and integrations.',
-                  bullets: const [
-                    'High-volume token budget',
-                    'Integration support',
-                    'Tailored forecasting setup',
-                  ],
-                  selected: appState.subscriptionPlan == 'Consulting',
-                  onSelect: () => _applyPlan('Consulting'),
-                ),
-                const SizedBox(height: 16.0),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14.0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FC),
-                    borderRadius: BorderRadius.circular(14.0),
-                    border: Border.all(color: const Color(0xFFD6DEEA)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Per-user Token Wallet',
-                          style: FlutterFlowTheme.of(context).titleSmall),
-                      const SizedBox(height: 6.0),
-                      Text(
-                        'Used ${appState.usedTokensThisMonth} / ${appState.monthlyTokenLimit} tokens',
-                        style: FlutterFlowTheme.of(context).bodyMedium,
-                      ),
-                      const SizedBox(height: 8.0),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999.0),
-                        child: LinearProgressIndicator(
-                          value: usageFraction.clamp(0.0, 1.0),
-                          minHeight: 8.0,
-                          backgroundColor: const Color(0xFFE4EAF2),
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Text('Remaining tokens: $tokensLeft',
-                          style: FlutterFlowTheme.of(context).bodySmall),
-                      const SizedBox(height: 8.0),
-                      Text(
-                        'Capabilities: max SKUs ${appState.maxSkusPerRun}, batch uploads ${appState.batchUploadsEnabled ? 'on' : 'off'}, API ${appState.apiAccessEnabled ? 'on' : 'off'}',
-                        style: FlutterFlowTheme.of(context).bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14.0),
-                    border: Border.all(color: const Color(0xFFD6DEEA)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Core User Flow Target',
-                          style: FlutterFlowTheme.of(context).titleSmall),
-                      const SizedBox(height: 6.0),
-                      Text('1. Upload file (Excel/CSV)',
-                          style: FlutterFlowTheme.of(context).bodySmall),
-                      Text('2. Validate and auto-detect columns',
-                          style: FlutterFlowTheme.of(context).bodySmall),
-                      Text('3. Train demand forecast model',
-                          style: FlutterFlowTheme.of(context).bodySmall),
-                      Text('4. Show chart + confidence bands + metrics',
-                          style: FlutterFlowTheme.of(context).bodySmall),
-                      Text('5. Export diagnostics (Excel/CSV)',
-                          style: FlutterFlowTheme.of(context).bodySmall),
-                      const SizedBox(height: 8.0),
-                      Text(
-                        'Target UX: upload -> forecast -> export in under 2 minutes and perceived result speed under 30 seconds.',
-                        style: FlutterFlowTheme.of(context).bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14.0),
-                FFButtonWidget(
-                  onPressed: () => context.pushNamedAuth(
-                    SubscriptionPlansWidget.routeName,
-                    context.mounted,
-                  ),
-                  text: 'Open Plan Comparison Page',
-                  options: FFButtonOptions(
-                    width: double.infinity,
-                    height: 44.0,
-                    color: FlutterFlowTheme.of(context).primary,
-                    textStyle: FlutterFlowTheme.of(context)
-                        .bodyMedium
-                        .override(color: Colors.white, letterSpacing: 0.0),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-                const SizedBox(height: 10.0),
-                FFButtonWidget(
-                  onPressed: () => context.pushNamedAuth(
-                    TokenWalletWidget.routeName,
-                    context.mounted,
-                  ),
-                  text: 'Open Token Wallet Page',
-                  options: FFButtonOptions(
-                    width: double.infinity,
-                    height: 44.0,
-                    color: FlutterFlowTheme.of(context).secondary,
-                    textStyle: FlutterFlowTheme.of(context)
-                        .bodyMedium
-                        .override(color: Colors.white, letterSpacing: 0.0),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-                const SizedBox(height: 10.0),
-                FFButtonWidget(
-                  onPressed: () => context.pushNamedAuth(
-                    ForecastUxLabWidget.routeName,
-                    context.mounted,
-                  ),
-                  text: 'Open Forecast UX Lab',
-                  options: FFButtonOptions(
-                    width: double.infinity,
-                    height: 44.0,
-                    color: const Color(0xFF2E7D32),
-                    textStyle: FlutterFlowTheme.of(context)
-                        .bodyMedium
-                        .override(color: Colors.white, letterSpacing: 0.0),
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-                if (currentUserUid.isEmpty) ...[
-                  const SizedBox(height: 12.0),
-                  FFButtonWidget(
-                    onPressed: () => context.goNamedAuth(
-                      Auth2Widget.routeName,
-                      context.mounted,
-                    ),
-                    text: 'Sign in to bind plan to auth user',
-                    options: FFButtonOptions(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720.0),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
                       width: double.infinity,
-                      height: 44.0,
-                      color: const Color(0xFF8D6E63),
-                      textStyle: FlutterFlowTheme.of(context)
-                          .bodyMedium
-                          .override(color: Colors.white, letterSpacing: 0.0),
-                      borderRadius: BorderRadius.circular(10.0),
+                      padding: const EdgeInsets.all(14.0),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0B3B6E), Color(0xFF1565C0)],
+                        ),
+                        borderRadius: BorderRadius.circular(14.0),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Auth User: $userId',
+                              style: FlutterFlowTheme.of(context)
+                                  .bodyMedium
+                                  .override(color: Colors.white)),
+                          const SizedBox(height: 4.0),
+                          Text('Email: $userEmail',
+                              style: FlutterFlowTheme.of(context)
+                                  .bodySmall
+                                  .override(color: const Color(0xFFE6ECF5))),
+                          const SizedBox(height: 8.0),
+                          Text('Current Plan: ${appState.subscriptionPlan}',
+                              style: FlutterFlowTheme.of(context)
+                                  .titleSmall
+                                  .override(color: Colors.white)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ],
+                    const SizedBox(height: 12.0),
+                    Text(
+                      'Pricing & Business Model',
+                      style: FlutterFlowTheme.of(context).titleMedium,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Freemium',
+                            subtitle: 'EUR 0 / month',
+                            icon: Icons.rocket_launch_rounded,
+                            color: const Color(0xFF1565C0),
+                            selected: appState.subscriptionPlan == 'Freemium',
+                            onTap: () => _applyPlan('Freemium'),
+                          ),
+                        ),
+                        SizedBox(width: tileGap),
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Starter',
+                            subtitle: 'EUR 19 / month',
+                            icon: Icons.trending_up_rounded,
+                            color: const Color(0xFF00897B),
+                            selected: appState.subscriptionPlan == 'Starter',
+                            onTap: () => _applyPlan('Starter'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: tileGap),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Pro',
+                            subtitle: 'EUR 59 / month',
+                            icon: Icons.workspace_premium_rounded,
+                            color: const Color(0xFF7B1FA2),
+                            selected: appState.subscriptionPlan == 'Pro',
+                            onTap: () => _applyPlan('Pro'),
+                          ),
+                        ),
+                        SizedBox(width: tileGap),
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Consulting',
+                            subtitle: 'Custom pricing',
+                            icon: Icons.handshake_rounded,
+                            color: const Color(0xFFF57C00),
+                            selected: appState.subscriptionPlan == 'Consulting',
+                            onTap: () => _applyPlan('Consulting'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16.0),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F9FC),
+                        borderRadius: BorderRadius.circular(14.0),
+                        border: Border.all(color: const Color(0xFFD6DEEA)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Per-user Token Wallet',
+                              style: FlutterFlowTheme.of(context).titleSmall),
+                          const SizedBox(height: 6.0),
+                          Text(
+                            'Used ${appState.usedTokensThisMonth} / ${appState.monthlyTokenLimit} tokens',
+                            style: FlutterFlowTheme.of(context).bodyMedium,
+                          ),
+                          const SizedBox(height: 8.0),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999.0),
+                            child: LinearProgressIndicator(
+                              value: usageFraction.clamp(0.0, 1.0),
+                              minHeight: 8.0,
+                              backgroundColor: const Color(0xFFE4EAF2),
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          Text('Remaining tokens: $tokensLeft',
+                              style: FlutterFlowTheme.of(context).bodySmall),
+                          const SizedBox(height: 8.0),
+                          Text(
+                            'Capabilities: max SKUs ${appState.maxSkusPerRun}, batch uploads ${appState.batchUploadsEnabled ? 'on' : 'off'}, API ${appState.apiAccessEnabled ? 'on' : 'off'}',
+                            style: FlutterFlowTheme.of(context).bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14.0),
+                        border: Border.all(color: const Color(0xFFD6DEEA)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Core User Flow Target',
+                              style: FlutterFlowTheme.of(context).titleSmall),
+                          const SizedBox(height: 6.0),
+                          Text('1. Upload file (Excel/CSV)',
+                              style: FlutterFlowTheme.of(context).bodySmall),
+                          Text('2. Validate and auto-detect columns',
+                              style: FlutterFlowTheme.of(context).bodySmall),
+                          Text('3. Train demand forecast model',
+                              style: FlutterFlowTheme.of(context).bodySmall),
+                          Text('4. Show chart + confidence bands + metrics',
+                              style: FlutterFlowTheme.of(context).bodySmall),
+                          Text('5. Export diagnostics (Excel/CSV)',
+                              style: FlutterFlowTheme.of(context).bodySmall),
+                          const SizedBox(height: 8.0),
+                          Text(
+                            'Target UX: upload -> forecast -> export in under 2 minutes and perceived result speed under 30 seconds.',
+                            style: FlutterFlowTheme.of(context).bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14.0),
+                    Text(
+                      'Quick Actions',
+                      style: FlutterFlowTheme.of(context).titleMedium,
+                    ),
+                    const SizedBox(height: 8.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Open Plan',
+                            subtitle: 'Comparison page',
+                            icon: Icons.view_list_rounded,
+                            color: const Color(0xFF3949AB),
+                            onTap: () =>
+                                context.pushNamed(Sub2Widget.routeName),
+                          ),
+                        ),
+                        SizedBox(width: tileGap),
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Open Token Wallet',
+                            subtitle: 'See your token balance',
+                            icon: Icons.account_balance_wallet_rounded,
+                            color: const Color(0xFF00838F),
+                            onTap: () =>
+                                context.pushNamed(TokenWalletWidget.routeName),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: tileGap),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Open Forecast UX Lab',
+                            subtitle: 'Prototype journey',
+                            icon: Icons.science_rounded,
+                            color: const Color(0xFF2E7D32),
+                            onTap: () => context
+                                .pushNamed(ForecastUxLabWidget.routeName),
+                          ),
+                        ),
+                        SizedBox(width: tileGap),
+                        SizedBox(
+                          width: tileSide,
+                          height: tileSide,
+                          child: _buildSquareTile(
+                            title: 'Sign in to bind plan',
+                            subtitle: 'Open auth page',
+                            icon: Icons.login_rounded,
+                            color: const Color(0xFF8D6E63),
+                            onTap: () =>
+                                context.pushNamed(Auth2Widget.routeName),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

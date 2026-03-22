@@ -1,4 +1,4 @@
-import '/app_state.dart';
+//import '/app_state.dart';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -190,7 +190,7 @@ class _TokenWalletWidgetState extends State<TokenWalletWidget> {
               ),
               const SizedBox(height: 10.0),
               DropdownButtonFormField<String>(
-                value: _selectedGranularity,
+                initialValue: _selectedGranularity,
                 decoration: const InputDecoration(
                   labelText: 'Granularity',
                   border: OutlineInputBorder(),

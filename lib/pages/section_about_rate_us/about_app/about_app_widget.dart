@@ -1,13 +1,7 @@
-import '/flutter_flow/flutter_flow_animations.dart';
-import '/flutter_flow/flutter_flow_count_controller.dart';
-import '/flutter_flow/flutter_flow_drop_down.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import '/flutter_flow/form_field_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'about_app_model.dart';
 export 'about_app_model.dart';
@@ -25,435 +19,562 @@ class AboutAppWidget extends StatefulWidget {
 class _AboutAppWidgetState extends State<AboutAppWidget>
     with TickerProviderStateMixin {
   late AboutAppModel _model;
+  late TabController _tabController;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
-
-  final animationsMap = <String, AnimationInfo>{};
 
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => AboutAppModel());
 
-    animationsMap.addAll({
-      'textOnPageLoadAnimation': AnimationInfo(
-        trigger: AnimationTrigger.onPageLoad,
-        effectsBuilder: () => [
-          FadeEffect(
-            curve: Curves.easeInOut,
-            delay: 0.0.ms,
-            duration: 600.0.ms,
-            begin: 0.0,
-            end: 1.0,
-          ),
-          MoveEffect(
-            curve: Curves.easeInOut,
-            delay: 0.0.ms,
-            duration: 600.0.ms,
-            begin: Offset(0.0, 60.0),
-            end: Offset(0.0, 0.0),
-          ),
-        ],
-      ),
-      'rowOnPageLoadAnimation': AnimationInfo(
-        trigger: AnimationTrigger.onPageLoad,
-        effectsBuilder: () => [
-          FadeEffect(
-            curve: Curves.easeInOut,
-            delay: 0.0.ms,
-            duration: 600.0.ms,
-            begin: 0.0,
-            end: 1.0,
-          ),
-          MoveEffect(
-            curve: Curves.easeInOut,
-            delay: 0.0.ms,
-            duration: 600.0.ms,
-            begin: Offset(0.0, 80.0),
-            end: Offset(0.0, 0.0),
-          ),
-        ],
-      ),
-      'containerOnPageLoadAnimation': AnimationInfo(
-        trigger: AnimationTrigger.onPageLoad,
-        effectsBuilder: () => [
-          FadeEffect(
-            curve: Curves.easeInOut,
-            delay: 0.0.ms,
-            duration: 600.0.ms,
-            begin: 0.0,
-            end: 1.0,
-          ),
-          MoveEffect(
-            curve: Curves.easeInOut,
-            delay: 0.0.ms,
-            duration: 600.0.ms,
-            begin: Offset(0.0, 140.0),
-            end: Offset(0.0, 0.0),
-          ),
-        ],
-      ),
-    });
-    setupAnimations(
-      animationsMap.values.where((anim) =>
-          anim.trigger == AnimationTrigger.onActionTrigger ||
-          !anim.applyInitialState),
-      this,
+    final initialIndex = FFAppState().aboutAppInitialTab.clamp(0, 3);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: initialIndex,
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FFAppState().update(() {
+        FFAppState().aboutAppInitialTab = 0;
+      });
+      safeSetState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _model.dispose();
-
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: scaffoldKey,
-      backgroundColor: FlutterFlowTheme.of(context).secondaryBackground,
-      appBar: responsiveVisibility(
-        context: context,
-        desktop: false,
-      )
-          ? AppBar(
-              backgroundColor: FlutterFlowTheme.of(context).primary,
-              automaticallyImplyLeading: false,
-              leading: FlutterFlowIconButton(
-                borderColor: Colors.transparent,
-                borderRadius: 30.0,
-                borderWidth: 1.0,
-                buttonSize: 60.0,
-                icon: Icon(
-                  Icons.arrow_back_rounded,
-                  color: Colors.white,
-                  size: 30.0,
-                ),
-                onPressed: () async {
-                  context.safePop();
-                },
-              ),
-              title: Text(
-                ' ',
-                style: FlutterFlowTheme.of(context).titleSmall.override(
-                      font: GoogleFonts.lexendDeca(
-                        fontWeight: FontWeight.w500,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                      ),
-                      color: Color(0xFF151B1E),
-                      fontSize: 16.0,
-                      letterSpacing: 0.0,
-                      fontWeight: FontWeight.w500,
-                      fontStyle:
-                          FlutterFlowTheme.of(context).titleSmall.fontStyle,
-                    ),
-              ),
-              actions: [],
-              centerTitle: true,
-              elevation: 2.0,
-            )
-          : null,
-      body: Column(
-        mainAxisSize: MainAxisSize.max,
+  Widget _buildTabSection({required String title, required Widget child}) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
-                    child: Hero(
-                      tag: 'mainImage',
-                      transitionOnUserGestures: true,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(0.0),
-                        child: Image.network(
-                          'https://images.unsplash.com/photo-1566958769312-82cef41d19ef?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NzF8fHByb2R1Y3RzfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=900&q=60',
-                          width: double.infinity,
-                          height: 430.0,
-                          fit: BoxFit.cover,
+          Text(
+            title,
+            style: FlutterFlowTheme.of(context).headlineSmall.override(
+                  font: GoogleFonts.interTight(
+                    fontWeight:
+                        FlutterFlowTheme.of(context).headlineSmall.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).headlineSmall.fontStyle,
+                  ),
+                  letterSpacing: 0.0,
+                ),
+          ),
+          const SizedBox(height: 12.0),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String body,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.0),
+        border: Border.all(color: const Color(0xFFD9E2F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon,
+                  color: FlutterFlowTheme.of(context).primary, size: 22.0),
+              const SizedBox(width: 8.0),
+              Expanded(
+                child: Text(
+                  title,
+                  style: FlutterFlowTheme.of(context).titleMedium.override(
+                        font: GoogleFonts.interTight(
+                          fontWeight: FlutterFlowTheme.of(context)
+                              .titleMedium
+                              .fontWeight,
+                          fontStyle: FlutterFlowTheme.of(context)
+                              .titleMedium
+                              .fontStyle,
                         ),
+                        letterSpacing: 0.0,
                       ),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 0.0, 0.0),
-                    child: Text(
-                      'Beauty Products',
-                      style:
-                          FlutterFlowTheme.of(context).headlineSmall.override(
-                                font: GoogleFonts.interTight(
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .headlineSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineSmall
-                                      .fontStyle,
-                                ),
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .headlineSmall
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineSmall
-                                    .fontStyle,
-                              ),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 12.0, 16.0, 16.0),
-                    child: Text(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.',
-                      style: FlutterFlowTheme.of(context).labelMedium.override(
-                            font: GoogleFonts.inter(
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            body,
+            style: FlutterFlowTheme.of(context).bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamCard({
+    required String imagePath,
+    required String name,
+    required String role,
+    required String about,
+    required String linkedInUrl,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.0),
+        border: Border.all(color: const Color(0xFFD9E2F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 66.0,
+                height: 66.0,
+                clipBehavior: Clip.antiAlias,
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: FlutterFlowTheme.of(context).titleMedium.override(
+                            font: GoogleFonts.interTight(
                               fontWeight: FlutterFlowTheme.of(context)
-                                  .labelMedium
+                                  .titleMedium
                                   .fontWeight,
                               fontStyle: FlutterFlowTheme.of(context)
-                                  .labelMedium
+                                  .titleMedium
                                   .fontStyle,
                             ),
                             letterSpacing: 0.0,
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .labelMedium
-                                .fontStyle,
                           ),
-                    ).animateOnPageLoad(
-                        animationsMap['textOnPageLoadAnimation']!),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 40.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '\$50.00',
-                          textAlign: TextAlign.start,
-                          style: FlutterFlowTheme.of(context)
-                              .headlineSmall
-                              .override(
-                                font: GoogleFonts.interTight(
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .headlineSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .headlineSmall
-                                      .fontStyle,
-                                ),
-                                letterSpacing: 0.0,
-                                fontWeight: FlutterFlowTheme.of(context)
-                                    .headlineSmall
-                                    .fontWeight,
-                                fontStyle: FlutterFlowTheme.of(context)
-                                    .headlineSmall
-                                    .fontStyle,
-                              ),
-                        ),
-                        Container(
-                          width: 130.0,
-                          height: 50.0,
-                          decoration: BoxDecoration(
-                            color: FlutterFlowTheme.of(context)
-                                .secondaryBackground,
-                            borderRadius: BorderRadius.circular(12.0),
-                            shape: BoxShape.rectangle,
-                            border: Border.all(
-                              color: FlutterFlowTheme.of(context).alternate,
-                              width: 2.0,
-                            ),
-                          ),
-                          child: FlutterFlowCountController(
-                            decrementIconBuilder: (enabled) => Icon(
-                              Icons.remove_rounded,
-                              color: enabled
-                                  ? FlutterFlowTheme.of(context).secondaryText
-                                  : FlutterFlowTheme.of(context).secondaryText,
-                              size: 16.0,
-                            ),
-                            incrementIconBuilder: (enabled) => Icon(
-                              Icons.add_rounded,
-                              color: enabled
-                                  ? FlutterFlowTheme.of(context).primary
-                                  : FlutterFlowTheme.of(context).secondaryText,
-                              size: 16.0,
-                            ),
-                            countBuilder: (count) => Text(
-                              count.toString(),
-                              style: FlutterFlowTheme.of(context)
-                                  .headlineSmall
-                                  .override(
-                                    font: GoogleFonts.interTight(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .headlineSmall
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .headlineSmall
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .headlineSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .headlineSmall
-                                        .fontStyle,
-                                  ),
-                            ),
-                            count: _model.countControllerValue ??= 1,
-                            updateCount: (count) => safeSetState(
-                                () => _model.countControllerValue = count),
-                            stepSize: 1,
-                            minimum: 1,
-                          ),
-                        ),
-                      ],
-                    ).animateOnPageLoad(
-                        animationsMap['rowOnPageLoadAnimation']!),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Material(
-            color: Colors.transparent,
-            elevation: 3.0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(0.0),
-            ),
-            child: Container(
-              width: double.infinity,
-              height: 100.0,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).primaryBackground,
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 4.0,
-                    color: Color(0x320F1113),
-                    offset: Offset(
-                      0.0,
-                      -2.0,
                     ),
-                  )
-                ],
-                borderRadius: BorderRadius.circular(0.0),
-              ),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(16.0, 0.0, 16.0, 34.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 12.0, 0.0),
-                        child: FlutterFlowDropDown<String>(
-                          controller: _model.dropDownValueController ??=
-                              FormFieldController<String>(null),
-                          options: ['Small', 'Medium', 'Large'],
-                          onChanged: (val) =>
-                              safeSetState(() => _model.dropDownValue = val),
-                          width: 130.0,
-                          height: 50.0,
-                          textStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .fontStyle,
-                                  ),
-                          hintText: 'Select a Size',
-                          icon: Icon(
-                            Icons.arrow_drop_down_rounded,
-                            color: Color(0xFF95A1AC),
-                            size: 15.0,
-                          ),
-                          fillColor:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          elevation: 2.0,
-                          borderColor:
-                              FlutterFlowTheme.of(context).secondaryBackground,
-                          borderWidth: 2.0,
-                          borderRadius: 12.0,
-                          margin: EdgeInsetsDirectional.fromSTEB(
-                              24.0, 4.0, 8.0, 4.0),
-                          hidesUnderline: true,
-                          isSearchable: false,
-                          isMultiSelect: false,
-                        ),
-                      ),
-                    ),
-                    FFButtonWidget(
-                      onPressed: () {
-                        print('Button pressed ...');
-                      },
-                      text: 'Add to Cart',
-                      options: FFButtonOptions(
-                        width: 130.0,
-                        height: 50.0,
-                        padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                        iconPadding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 0.0),
-                        color: FlutterFlowTheme.of(context).primary,
-                        textStyle:
-                            FlutterFlowTheme.of(context).titleSmall.override(
-                                  font: GoogleFonts.interTight(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleSmall
-                                        .fontStyle,
-                                  ),
-                                  color: Colors.white,
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleSmall
-                                      .fontStyle,
-                                ),
-                        elevation: 2.0,
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
-                          width: 1.0,
-                        ),
-                      ),
+                    const SizedBox(height: 2.0),
+                    Text(
+                      role,
+                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                          color: FlutterFlowTheme.of(context).secondaryText),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 10.0),
+          Text(
+            about,
+            style: FlutterFlowTheme.of(context).bodyMedium,
+          ),
+          const SizedBox(height: 10.0),
+          InkWell(
+            onTap: () => launchURL(linkedInUrl),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.open_in_new_rounded,
+                  size: 18.0,
+                  color: FlutterFlowTheme.of(context).primary,
+                ),
+                const SizedBox(width: 6.0),
+                Text(
+                  'Open LinkedIn Profile',
+                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                        color: FlutterFlowTheme.of(context).primary,
+                        letterSpacing: 0.0,
+                      ),
+                ),
+              ],
             ),
-          ).animateOnPageLoad(animationsMap['containerOnPageLoadAnimation']!),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEngineHighlight({
+    required String eyebrow,
+    required String title,
+    required String body,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18.0),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF13294B), Color(0xFF1E4D8F)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F0F172A),
+            blurRadius: 14.0,
+            offset: Offset(0.0, 6.0),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            eyebrow,
+            style: FlutterFlowTheme.of(context).labelMedium.override(
+                  font: GoogleFonts.interTight(
+                    fontWeight: FontWeight.w700,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).labelMedium.fontStyle,
+                  ),
+                  color: const Color(0xFFBFD6FF),
+                  letterSpacing: 0.4,
+                ),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            title,
+            style: FlutterFlowTheme.of(context).headlineSmall.override(
+                  font: GoogleFonts.interTight(
+                    fontWeight:
+                        FlutterFlowTheme.of(context).headlineSmall.fontWeight,
+                    fontStyle:
+                        FlutterFlowTheme.of(context).headlineSmall.fontStyle,
+                  ),
+                  color: Colors.white,
+                  letterSpacing: 0.0,
+                ),
+          ),
+          const SizedBox(height: 10.0),
+          Text(
+            body,
+            style: FlutterFlowTheme.of(context).bodyMedium.override(
+                  color: const Color(0xFFE8F1FF),
+                  letterSpacing: 0.0,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEngineSection({
+    required IconData icon,
+    required String title,
+    required String body,
+    required Color accentColor,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.0),
+        border: Border.all(color: const Color(0xFFD9E2F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40.0,
+                height: 40.0,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Icon(icon, color: accentColor, size: 22.0),
+              ),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Text(
+                  title,
+                  style: FlutterFlowTheme.of(context).titleMedium.override(
+                        font: GoogleFonts.interTight(
+                          fontWeight: FlutterFlowTheme.of(context)
+                              .titleMedium
+                              .fontWeight,
+                          fontStyle: FlutterFlowTheme.of(context)
+                              .titleMedium
+                              .fontStyle,
+                        ),
+                        letterSpacing: 0.0,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12.0),
+          RichText(
+            text: TextSpan(
+              style: FlutterFlowTheme.of(context).bodyMedium.override(
+                    color: FlutterFlowTheme.of(context).primaryText,
+                    letterSpacing: 0.0,
+                  ),
+              children: [
+                TextSpan(
+                  text: '$title: ',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(text: body),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: theme.primaryBackground,
+        appBar: AppBar(
+          backgroundColor: theme.primary,
+          automaticallyImplyLeading: false,
+          leading: FlutterFlowIconButton(
+            borderColor: Colors.transparent,
+            borderRadius: 30.0,
+            borderWidth: 1.0,
+            buttonSize: 60.0,
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Colors.white,
+              size: 30.0,
+            ),
+            onPressed: () async {
+              context.safePop();
+            },
+          ),
+          title: Text(
+            'About App',
+            style: theme.headlineMedium.override(
+              font: GoogleFonts.interTight(
+                fontWeight: theme.headlineMedium.fontWeight,
+                fontStyle: theme.headlineMedium.fontStyle,
+              ),
+              color: Colors.white,
+              letterSpacing: 0.0,
+            ),
+          ),
+          centerTitle: false,
+          elevation: 2.0,
+          bottom: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: const Color(0xFFD5E2FF),
+            labelStyle: theme.bodyMedium.override(
+              font: GoogleFonts.interTight(
+                fontWeight: FontWeight.w600,
+                fontStyle: theme.bodyMedium.fontStyle,
+              ),
+              letterSpacing: 0.0,
+            ),
+            tabs: const [
+              Tab(text: 'About App'),
+              Tab(text: 'Team'),
+              Tab(text: 'Security App'),
+              Tab(text: 'Engine Prediction'),
+            ],
+          ),
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900.0),
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTabSection(
+                  title: 'A practical AI platform you can trust',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoCard(
+                        icon: Icons.track_changes_rounded,
+                        title: 'Built for real daily decisions',
+                        body:
+                            'This app helps teams move from spreadsheet guesswork to reliable, data-driven actions. Users can upload data, run forecasting quickly, and get outputs they can understand and use immediately.',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildInfoCard(
+                        icon: Icons.handshake_rounded,
+                        title: 'Designed for confidence and adoption',
+                        body:
+                            'The interface is clear, guided, and friendly for non-technical users. Every step of the flow is focused on speed, clarity, and business value, so people can trust the result and act with confidence.',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildInfoCard(
+                        icon: Icons.insights_rounded,
+                        title: 'From insight to impact',
+                        body:
+                            'Beyond predictions, the app supports business planning by turning data into practical insights. It gives companies the power to reduce uncertainty and improve stock, sales, and operational decisions.',
+                      ),
+                    ],
+                  ),
+                ),
+                _buildTabSection(
+                  title: 'People behind the product',
+                  child: Column(
+                    children: [
+                      _buildTeamCard(
+                        imagePath: 'assets/images/profil_demo.jpg',
+                        name: 'Giannis Antoniou',
+                        role: 'Co-Founder and AI Product Engineer',
+                        about:
+                            'I build practical AI products that transform business data into clear actions. My focus is trust, performance, and fast user value in every release.',
+                        linkedInUrl:
+                            'https://www.linkedin.com/in/%CE%B9%CF%89%CE%AC%CE%BD%CE%BD%CE%B7%CF%82-%CE%B1%CE%BD%CF%84%CF%89%CE%BD%CE%AF%CE%BF%CF%85-giannis-antoniou-046b684b/',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildTeamCard(
+                        imagePath: 'assets/images/somon.jpg',
+                        name: 'Georgios Kiminos',
+                        role: 'Co-Founder and Business Strategy Lead',
+                        about:
+                            'I connect product direction with real market needs. I focus on sustainable growth, customer value, and turning innovation into measurable business outcomes.',
+                        linkedInUrl:
+                            'https://www.linkedin.com/in/georgios-kiminos-04111973/?originalSubdomain=gr',
+                      ),
+                    ],
+                  ),
+                ),
+                _buildTabSection(
+                  title: 'Security and BaaS reliability',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoCard(
+                        icon: Icons.shield_rounded,
+                        title: 'Secure-by-default architecture',
+                        body:
+                            'Our platform uses a Backend-as-a-Service stack with authenticated access, secured data paths, and strict separation of user data. Security rules help ensure each user only accesses permitted resources.',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildInfoCard(
+                        icon: Icons.storage_rounded,
+                        title: 'Managed infrastructure and resilience',
+                        body:
+                            'BaaS services provide managed uptime, scalable storage, and built-in monitoring. This reduces operational risk and allows fast, dependable delivery without sacrificing security controls.',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildInfoCard(
+                        icon: Icons.verified_user_rounded,
+                        title: 'Identity, access, and governance',
+                        body:
+                            'Authentication and role-aware access keep sensitive actions controlled. The app is designed to support auditable workflows and safe collaboration for teams handling business-critical data.',
+                      ),
+                    ],
+                  ),
+                ),
+                _buildTabSection(
+                  title: 'Prediction engine built for business execution',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildEngineHighlight(
+                        eyebrow: 'THE ENGINE OF THE APPLICATION',
+                        title:
+                            'The Python ML Linear Regression Model at the heart of the platform',
+                        body:
+                            'At the heart of my full-stack SaaS application is a V12 engine: a Python ML Linear Regression model. It is the engine that embodies three key characteristics: absolute predictive power, adaptation to the needs of each market and the reliability required of a hyperSaaS.',
+                      ),
+                      const SizedBox(height: 12.0),
+                      _buildEngineSection(
+                        icon: Icons.flash_on_rounded,
+                        title: 'Power',
+                        accentColor: const Color(0xFFD84315),
+                        body:
+                            'Each token that is activated releases a service agreement that pushes the application to 9,500 rpm, giving an acceleration in performance that will have you on the edge of your seat, proving that power in our platform is synonymous with absolute control over predictions.',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildEngineSection(
+                        icon: Icons.tune_rounded,
+                        title: 'Adaptation',
+                        accentColor: const Color(0xFF00897B),
+                        body:
+                            'The magic, however, lies in the adaptation. Our model does not simply give numbers. Instead, it dynamically adapts to seasonal calendars, business markets and country sales. Whether you are analyzing seasonal trends or comparing different markets, the algorithm response is immediate and personalized. This ability to adapt turns a complex ML model into a precision tool in the hands of the user.',
+                      ),
+                      const SizedBox(height: 10.0),
+                      _buildEngineSection(
+                        icon: Icons.verified_rounded,
+                        title: 'Reliability',
+                        accentColor: const Color(0xFF3949AB),
+                        body:
+                            'Every pipeline, from data processing to final forecast, is designed to withstand the limits. With the power of Firebase and GCP as a foundation, the reliability of the application is guaranteed even under extreme load conditions, offering the user the luxury of peace of mind: you know that when you run a forecast, the answer will always be the same, unwavering and accurate.',
+                      ),
+                      const SizedBox(height: 12.0),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F9FC),
+                          borderRadius: BorderRadius.circular(14.0),
+                          border: Border.all(color: const Color(0xFFD9E2F0)),
+                        ),
+                        child: RichText(
+                          text: TextSpan(
+                            style: FlutterFlowTheme.of(context)
+                                .bodyMedium
+                                .override(
+                                  color:
+                                      FlutterFlowTheme.of(context).primaryText,
+                                  letterSpacing: 0.0,
+                                ),
+                            children: const [
+                              TextSpan(
+                                text: 'In short: ',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              TextSpan(
+                                text:
+                                    'the engine of my application is not just a set of algorithms. It is the perfect balance between the raw predictive power that fascinates, the intelligent adaptation that makes each analysis unique, and the impeccable reliability that accompanies you in every business decision.',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

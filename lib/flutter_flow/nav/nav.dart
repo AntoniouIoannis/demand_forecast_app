@@ -255,6 +255,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               path: DashboardWidget.routePath,
               builder: (context, params) => DashboardWidget(),
             ),
+            FFRoute(
+              name: ExchangesWidget.routeName,
+              path: ExchangesWidget.routePath,
+              builder: (context, params) => ExchangesWidget(),
+            ),
           ].map((r) => r.toRoute(appStateNotifier)).toList(),
         ),
       ].map((r) => r.toRoute(appStateNotifier)).toList(),

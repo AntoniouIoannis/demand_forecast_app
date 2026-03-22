@@ -115,4 +115,16 @@ class FFAppState extends ChangeNotifier {
   set defaultTimezone(String value) {
     _defaultTimezone = value;
   }
+
+  int _aboutAppInitialTab = 0;
+  int get aboutAppInitialTab => _aboutAppInitialTab;
+  set aboutAppInitialTab(int value) {
+    _aboutAppInitialTab = value;
+  }
+
+  int _exchangesInitialTab = 0;
+  int get exchangesInitialTab => _exchangesInitialTab;
+  set exchangesInitialTab(int value) {
+    _exchangesInitialTab = value;
+  }
 }
