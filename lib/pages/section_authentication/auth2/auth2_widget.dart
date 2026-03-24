@@ -208,7 +208,7 @@ class _Auth2WidgetState extends State<Auth2Widget>
         if (!mounted) {
           return;
         }
-        context.goNamedAuth(ImportDataWidget.routeName, context.mounted);
+        context.goNamedAuth(DashboardWidget.routeName, context.mounted);
       });
     }
 

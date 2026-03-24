@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -24,39 +23,10 @@ class _DashboardWidgetState extends State<DashboardWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
-  static const List<String> _businessMarkets = <String>[
-    'Retail',
-    'Food & Beverage',
-    'Pharmacy',
-    'Electronics',
-    'Fashion',
-    'Automotive',
-    'Hospitality',
-    'Other',
-  ];
-  static const List<String> _marketCountries = <String>[
-    'Greece',
-    'Cyprus',
-    'Italy',
-    'Germany',
-    'France',
-    'Spain',
-    'United Kingdom',
-    'United States',
-  ];
-  static const List<int> _forecastHorizons = <int>[30, 90, 365];
-
-  String? _selectedMarket;
-  String? _selectedCountry;
-  int? _selectedForecastHorizonDays;
-
   @override
   void initState() {
     super.initState();
     _model = createModel(context, () => DashboardModel());
-    _selectedMarket = FFAppState().selectedBusinessMarket;
-    _selectedCountry = FFAppState().selectedMarketCountry;
-    _selectedForecastHorizonDays = FFAppState().forecastHorizonDays;
     WidgetsBinding.instance.addPostFrameCallback((_) => safeSetState(() {}));
   }
 
@@ -117,162 +87,6 @@ class _DashboardWidgetState extends State<DashboardWidget> {
     );
   }
 
-  void _onProfileSelectionChanged() {
-    FFAppState().update(() {
-      FFAppState().selectedBusinessMarket = _selectedMarket;
-      FFAppState().selectedMarketCountry = _selectedCountry;
-      FFAppState().forecastHorizonDays = _selectedForecastHorizonDays;
-    });
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null && uid.isNotEmpty) {
-      FirebaseFirestore.instance
-          .collection('onhold_users')
-          .doc(uid)
-          .set(<String, dynamic>{
-        'market': _selectedMarket,
-        'marketCountry': _selectedCountry,
-        'forecastHorizonDays': _selectedForecastHorizonDays,
-        'lastSeenAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    }
-  }
-
-  Widget _buildSelectionCriteriaPanel() {
-    final theme = FlutterFlowTheme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: theme.secondaryBackground,
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: theme.alternate),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 8.0,
-            offset: Offset(0.0, 2.0),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.tune_rounded, color: theme.primary, size: 20.0),
-              const SizedBox(width: 8.0),
-              Text(
-                'Business Context',
-                style: GoogleFonts.interTight(
-                  color: theme.primaryText,
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          Text(
-            'Business Market',
-            style: GoogleFonts.inter(
-              color: theme.secondaryText,
-              fontSize: 12.0,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedMarket,
-            items: _businessMarkets
-                .map((m) => DropdownMenuItem<String>(value: m, child: Text(m)))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedMarket = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Choose market',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 10.0,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14.0),
-          Text(
-            'Market Country',
-            style: GoogleFonts.inter(
-              color: theme.secondaryText,
-              fontSize: 12.0,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedCountry,
-            items: _marketCountries
-                .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedCountry = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Choose country',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 10.0,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14.0),
-          Text(
-            'Forecast Horizon',
-            style: GoogleFonts.inter(
-              color: theme.secondaryText,
-              fontSize: 12.0,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<int>(
-            initialValue: _selectedForecastHorizonDays,
-            items: _forecastHorizons
-                .map((d) =>
-                    DropdownMenuItem<int>(value: d, child: Text('$d days')))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedForecastHorizonDays = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Select horizon',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 10.0,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
@@ -309,6 +123,52 @@ class _DashboardWidgetState extends State<DashboardWidget> {
               fontWeight: FontWeight.w700,
             ),
           ),
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'profile') {
+                  context.pushNamed(UserProfileWidget.routeName);
+                } else if (value == 'signout') {
+                  await authManager.signOut();
+                  if (mounted) context.goNamed(Auth2Widget.routeName);
+                }
+              },
+              offset: const Offset(0, 48),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0)),
+              child: CircleAvatar(
+                radius: 18.0,
+                // ignore: deprecated_member_use
+                backgroundColor: Colors.white.withOpacity(0.2),
+                child: const Icon(Icons.person_rounded,
+                    color: Colors.white, size: 22.0),
+              ),
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.manage_accounts_outlined),
+                      SizedBox(width: 10),
+                      Text('Profile'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'signout',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.logout_rounded, color: Colors.redAccent),
+                      SizedBox(width: 10),
+                      Text('Sign Out',
+                          style: TextStyle(color: Colors.redAccent)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 8.0),
+          ],
           centerTitle: false,
           elevation: 2.0,
         ),
@@ -445,9 +305,6 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                         ],
                       ),
                     const SizedBox(height: 20.0),
-                    _buildSelectionCriteriaPanel(),
-                    const SizedBox(height: 24.0),
-
                     // Main layout: Large "Forecast" on left, grid of 4 tiles on right (desktop) / stacked (mobile)
                     if (isDesktop)
                       Row(

@@ -224,6 +224,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               builder: (context, params) => VerifyEmailWidget(),
             ),
             FFRoute(
+              name: UserProfileWidget.routeName,
+              path: UserProfileWidget.routePath,
+              requireAuth: true,
+              builder: (context, params) => const UserProfileWidget(),
+            ),
+            FFRoute(
               name: HomePageWidget.routeName,
               path: HomePageWidget.routePath,
               builder: (context, params) => params.isEmpty

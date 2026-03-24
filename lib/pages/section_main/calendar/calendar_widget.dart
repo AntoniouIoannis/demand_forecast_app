@@ -22,6 +22,42 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   static const String _allCountries = 'All Countries';
   static const String _allMarkets = 'All Markets';
 
+  static const Map<String, String> _countryCodeNames = <String, String>{
+    'AF': 'Afghanistan',
+    'AE': 'UAE',
+    'BE': 'Belgium',
+    'BH': 'Bahrain',
+    'CN': 'China',
+    'DE': 'Germany',
+    'EG': 'Egypt',
+    'ES': 'Spain',
+    'FR': 'France',
+    'GB': 'United Kingdom',
+    'GR': 'Greece',
+    'HK': 'Hong Kong',
+    'IL': 'Israel',
+    'IN': 'India',
+    'IR': 'Iran',
+    'IT': 'Italy',
+    'JP': 'Japan',
+    'JO': 'Jordan',
+    'KW': 'Kuwait',
+    'NL': 'Netherlands',
+    'OM': 'Oman',
+    'QA': 'Qatar',
+    'SA': 'Saudi Arabia',
+    'SG': 'Singapore',
+    'TH': 'Thailand',
+    'US': 'United States',
+    'GLOBAL': 'Global',
+  };
+
+  String _countryLabel(String code) {
+    if (code == _allCountries) return code;
+    final name = _countryCodeNames[code];
+    return name != null ? '$code – $name' : code;
+  }
+
   String _selectedCountry = _allCountries;
   String _selectedMarket = _allMarkets;
 
@@ -255,7 +291,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                             .map(
                               (country) => DropdownMenuItem<String>(
                                 value: country,
-                                child: Text(country),
+                                child: Text(_countryLabel(country)),
                               ),
                             )
                             .toList(),
@@ -334,12 +370,24 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 ),
                 const SizedBox(height: 10.0),
                 Expanded(
-                  child: ListView.separated(
+                  child: GridView.builder(
                     itemCount: filteredCalendars.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10.0),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 10.0,
+                      mainAxisSpacing: 10.0,
+                      mainAxisExtent: 200.0,
+                    ),
                     itemBuilder: (context, index) {
                       final item = filteredCalendars[index];
+                      final countries = (item['countries'] as List<String>)
+                          .map((c) => _countryCodeNames[c] != null
+                              ? '$c\u00a0${_countryCodeNames[c]}'
+                              : c)
+                          .join(', ');
                       return Container(
+                        padding: const EdgeInsets.all(10.0),
                         decoration: BoxDecoration(
                           color:
                               FlutterFlowTheme.of(context).secondaryBackground,
@@ -349,61 +397,79 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                             width: 1.0,
                           ),
                         ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsetsDirectional.fromSTEB(
-                              14, 8, 12, 8),
-                          leading: Icon(
-                            Icons.calendar_month,
-                            color: FlutterFlowTheme.of(context).primary,
-                            size: 24.0,
-                          ),
-                          title: Text(
-                            item['name'] as String,
-                            style: FlutterFlowTheme.of(context)
-                                .titleMedium
-                                .override(
-                                  font: GoogleFonts.interTight(
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .titleMedium
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .titleMedium
-                                        .fontStyle,
-                                  ),
-                                  letterSpacing: 0.0,
-                                  fontWeight: FlutterFlowTheme.of(context)
-                                      .titleMedium
-                                      .fontWeight,
-                                  fontStyle: FlutterFlowTheme.of(context)
-                                      .titleMedium
-                                      .fontStyle,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.calendar_month,
+                                  color: FlutterFlowTheme.of(context).primary,
+                                  size: 16.0,
                                 ),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsetsDirectional.only(top: 6.0),
-                            child: Text(
-                              'Regions: ${item['regions']}\n${item['notes']}',
-                              style: FlutterFlowTheme.of(context)
-                                  .bodySmall
-                                  .override(
-                                    font: GoogleFonts.inter(
-                                      fontWeight: FlutterFlowTheme.of(context)
-                                          .bodySmall
-                                          .fontWeight,
-                                      fontStyle: FlutterFlowTheme.of(context)
-                                          .bodySmall
-                                          .fontStyle,
-                                    ),
-                                    letterSpacing: 0.0,
-                                    fontWeight: FlutterFlowTheme.of(context)
-                                        .bodySmall
-                                        .fontWeight,
-                                    fontStyle: FlutterFlowTheme.of(context)
-                                        .bodySmall
-                                        .fontStyle,
+                                const SizedBox(width: 4.0),
+                                Expanded(
+                                  child: Text(
+                                    item['name'] as String,
+                                    style: FlutterFlowTheme.of(context)
+                                        .titleSmall
+                                        .override(
+                                          font: GoogleFonts.interTight(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          letterSpacing: 0.0,
+                                        ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                ),
+                              ],
                             ),
-                          ),
+                            const SizedBox(height: 5.0),
+                            Text(
+                              item['regions'] as String,
+                              style: FlutterFlowTheme.of(context)
+                                  .labelSmall
+                                  .override(
+                                    color: FlutterFlowTheme.of(context).primary,
+                                    letterSpacing: 0.0,
+                                  ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4.0),
+                            Expanded(
+                              child: Text(
+                                item['notes'] as String,
+                                style: FlutterFlowTheme.of(context)
+                                    .bodySmall
+                                    .override(
+                                      font: GoogleFonts.inter(
+                                        fontWeight: FlutterFlowTheme.of(context)
+                                            .bodySmall
+                                            .fontWeight,
+                                      ),
+                                      letterSpacing: 0.0,
+                                    ),
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 4.0),
+                            Text(
+                              countries,
+                              style: FlutterFlowTheme.of(context)
+                                  .labelSmall
+                                  .override(
+                                    color: FlutterFlowTheme.of(context)
+                                        .secondaryText,
+                                    letterSpacing: 0.0,
+                                  ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       );
                     },

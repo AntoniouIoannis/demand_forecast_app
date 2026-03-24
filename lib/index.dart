@@ -29,6 +29,8 @@ export '/pages/section_import_data/forecast_results/forecast_results_widget.dart
 export '/pages/section_authentication/feed/feed_widget.dart' show FeedWidget;
 export '/pages/section_authentication/verify_email/verify_email_widget.dart'
     show VerifyEmailWidget;
+export '/pages/section_authentication/user_profile/user_profile_widget.dart'
+    show UserProfileWidget;
 export '/pages/section_main/home_page/home_page_widget.dart'
     show HomePageWidget;
 export '/pages/section_main/about/about_widget.dart' show AboutWidget;

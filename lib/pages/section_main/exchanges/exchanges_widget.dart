@@ -82,6 +82,16 @@ class _ExchangesWidgetState extends State<ExchangesWidget>
     'NVDA',
   ];
 
+  static const Map<String, String> _stockCompanyNames = <String, String>{
+    'IBM': 'IBM Corp.',
+    'AAPL': 'Apple Inc.',
+    'MSFT': 'Microsoft Corp.',
+    'GOOGL': 'Alphabet (Google)',
+    'AMZN': 'Amazon.com Inc.',
+    'TSLA': 'Tesla Inc.',
+    'NVDA': 'NVIDIA Corp.',
+  };
+
   String _baseCurrency = 'EUR';
   String _currencyDate = '';
   bool _isCurrencyLoading = false;
@@ -307,8 +317,9 @@ class _ExchangesWidgetState extends State<ExchangesWidget>
                         (code) => DropdownMenuItem<String>(
                           value: code,
                           child: Text(
-                            '$code  ${_currencySymbol(code)}',
+                            '${_currencyName(code)}  $code  ${_currencySymbol(code)}',
                             style: theme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       )
@@ -381,67 +392,92 @@ class _ExchangesWidgetState extends State<ExchangesWidget>
               ),
             )
           else
-            Column(
-              children: _currencyRates.entries.map((entry) {
-                final code = entry.key;
-                final value = entry.value;
-                final name = _currencyName(code);
-                return Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 8.0),
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(color: const Color(0xFFDCE4F0)),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const int cols = 5;
+                const double spacing = 6.0;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _currencyRates.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    mainAxisExtent: 68.0,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: theme.titleSmall,
-                            ),
-                            const SizedBox(height: 2.0),
-                            Text(
-                              '$code ${_currencySymbol(code)}',
-                              style: theme.bodySmall,
-                            ),
-                          ],
-                        ),
+                  itemBuilder: (context, index) {
+                    final entry = _currencyRates.entries.elementAt(index);
+                    final code = entry.key;
+                    final value = entry.value;
+                    final name = _currencyName(code);
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6.0, vertical: 6.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: Border.all(color: const Color(0xFFDCE4F0)),
                       ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          value.toStringAsFixed(4),
-                          textAlign: TextAlign.right,
-                          style: theme.titleSmall.override(
-                            font: GoogleFonts.interTight(
-                              fontWeight: FontWeight.w700,
-                              fontStyle: theme.titleSmall.fontStyle,
-                            ),
-                            letterSpacing: 0.0,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: theme.labelSmall.override(
+                                    font: GoogleFonts.interTight(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    letterSpacing: 0.0,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 4.0),
+                              Text(
+                                value.toStringAsFixed(4),
+                                style: theme.labelSmall.override(
+                                  font: GoogleFonts.interTight(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  letterSpacing: 0.0,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: 4.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '$code  ${_currencySymbol(code)}',
+                                style: theme.labelSmall.override(
+                                  color: theme.secondaryText,
+                                  letterSpacing: 0.0,
+                                ),
+                                maxLines: 1,
+                              ),
+                              Text(
+                                'per $_baseCurrency',
+                                style: theme.labelSmall.override(
+                                  color: theme.secondaryText,
+                                  letterSpacing: 0.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10.0),
-                      Expanded(
-                        flex: 4,
-                        child: Text(
-                          'Per $_baseCurrency',
-                          textAlign: TextAlign.right,
-                          style: theme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 );
-              }).toList(),
+              },
             ),
         ],
       ),
@@ -499,7 +535,9 @@ class _ExchangesWidgetState extends State<ExchangesWidget>
                       .map(
                         (symbol) => DropdownMenuItem<String>(
                           value: symbol,
-                          child: Text(symbol),
+                          child: Text(
+                            '$symbol – ${_stockCompanyNames[symbol] ?? symbol}',
+                          ),
                         ),
                       )
                       .toList(),
