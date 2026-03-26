@@ -137,7 +137,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
           ),
           const SizedBox(height: 6.0),
           DropdownButtonFormField<String>(
-            value: _selectedMarket,
+            initialValue: _selectedMarket,
             items: _businessMarkets
                 .map((m) => DropdownMenuItem<String>(value: m, child: Text(m)))
                 .toList(),
@@ -165,7 +165,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
           ),
           const SizedBox(height: 6.0),
           DropdownButtonFormField<String>(
-            value: _selectedCountry,
+            initialValue: _selectedCountry,
             items: _marketCountries
                 .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
                 .toList(),
@@ -193,7 +193,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
           ),
           const SizedBox(height: 6.0),
           DropdownButtonFormField<int>(
-            value: _selectedForecastHorizonDays,
+            initialValue: _selectedForecastHorizonDays,
             items: _forecastHorizons
                 .map((d) =>
                     DropdownMenuItem<int>(value: d, child: Text('$d days')))
@@ -274,7 +274,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
                       radius: 40.0,
                       backgroundColor: FlutterFlowTheme.of(context)
                           .primary
-                          .withOpacity(0.15),
+                          .withValues(alpha: 0.15),
                       child: Icon(
                         Icons.person_rounded,
                         size: 44.0,
@@ -616,12 +616,12 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
       decoration: BoxDecoration(
         color: isPro
-            ? FlutterFlowTheme.of(context).primary.withOpacity(0.12)
+            ? FlutterFlowTheme.of(context).primary.withValues(alpha: 0.12)
             : FlutterFlowTheme.of(context).alternate,
         borderRadius: BorderRadius.circular(20.0),
         border: Border.all(
           color: isPro
-              ? FlutterFlowTheme.of(context).primary.withOpacity(0.4)
+              ? FlutterFlowTheme.of(context).primary.withValues(alpha: 0.4)
               : FlutterFlowTheme.of(context).alternate,
         ),
       ),
