@@ -60,5 +60,6 @@
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
-  "cmake.sourceDirectory": "C:/Users/iantoniou/AntiGrav_projs/demand_forecast_app/windows"
+  "cmake.sourceDirectory": "C:/Users/iantoniou/AntiGrav_projs/demand_forecast_app/windows",
+  "cmake.generator": "Ninja"
 }
