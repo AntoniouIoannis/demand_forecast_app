@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1072203670086",
+    "project_id": "demand-forecast-ian",
+    "storage_bucket": "demand-forecast-ian.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1072203670086:android:a684194bee76b848432047",
+        "android_client_info": {
+          "package_name": "com.mycompany.demandforecastapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAK9LMDYHxHUezul2Wuf8wsW861ZVL-WyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1072203670086:android:6404ec3eb856f72d432047",
+        "android_client_info": {
+          "package_name": "gr.iantoniou.demandforecastapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAK9LMDYHxHUezul2Wuf8wsW861ZVL-WyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

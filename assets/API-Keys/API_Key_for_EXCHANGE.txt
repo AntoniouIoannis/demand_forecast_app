@@ -1,0 +1,11 @@
+https://www.alphavantage.co/support/#api-key
+
+Free API Key
+Welcome to Alpha Vantage! 
+Your API key is: 5YC1Z24GTQ08CAH6. 
+
+Please record this API key at a safe place for future data access.
+Now that you have acquired an API key, 
+please refer to our API documentation to start building. 
+Need inspirations on what to build? 
+Please check out the Trading Agents stock analysis tool (#1 trending on Github).

@@ -1,0 +1,23 @@
+[
+  {
+    "origin": [
+      "http://localhost:3000",
+      "http://localhost:5000",
+      "http://localhost:8080",
+      "http://localhost:53551",
+      "https://demand-forecast-ian.web.app",
+      "https://demand-forecast-ian.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "x-goog-resumable",
+      "x-goog-upload-command",
+      "x-goog-upload-content-type",
+      "x-goog-upload-protocol",
+      "x-goog-upload-offset"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

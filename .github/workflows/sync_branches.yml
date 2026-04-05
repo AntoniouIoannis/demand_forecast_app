@@ -1,0 +1,66 @@
+name: Sync main <-> copilot branch
+
+on:
+  push:
+    branches:
+      - main
+      - copilot/build-web-and-apk-app
+      - copilot/update-welcome-page-input-fields
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-branches:
+    # Prevent infinite loops when this workflow itself pushes commits.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine source and target branch
+        id: vars
+        shell: bash
+        run: |
+          SOURCE="${GITHUB_REF_NAME}"
+          if [ "$SOURCE" = "main" ]; then
+            TARGET="copilot/update-welcome-page-input-fields"
+          else
+            TARGET="main"
+          fi
+          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch both branches
+        run: |
+          git fetch origin "${{ steps.vars.outputs.source }}"
+          git fetch origin "${{ steps.vars.outputs.target }}"
+
+      - name: Merge source into target
+        shell: bash
+        run: |
+          SOURCE="${{ steps.vars.outputs.source }}"
+          TARGET="${{ steps.vars.outputs.target }}"
+
+          git checkout -B "$TARGET" "origin/$TARGET"
+
+          if git merge --no-ff --no-edit "origin/$SOURCE"; then
+            echo "Merge completed or already up to date."
+          else
+            echo "Merge conflict detected. Please resolve manually between $SOURCE and $TARGET."
+            exit 1
+          fi
+
+      - name: Push synced target branch
+        run: |
+          git push origin "${{ steps.vars.outputs.target }}"
