@@ -126,16 +126,26 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
 
   late void Function() _listener;
   final TextEditingController _textEditingController = TextEditingController();
+  late final ValueNotifier<T?> _valueNotifier;
+  late final ValueNotifier<List<T>> _multiValueNotifier;
 
   @override
   void initState() {
     super.initState();
+    _valueNotifier = ValueNotifier<T?>(currentValue);
+    _multiValueNotifier = ValueNotifier<List<T>>(currentValues.toList());
     if (isMultiSelect) {
-      _listener =
-          () => widget.onMultiSelectChanged!(multiSelectController.value);
+      _listener = () {
+        _multiValueNotifier.value =
+            List<T>.from(multiSelectController.value ?? <T>[]);
+        widget.onMultiSelectChanged!(multiSelectController.value);
+      };
       multiSelectController.addListener(_listener);
     } else {
-      _listener = () => widget.onChanged!(controller.value);
+      _listener = () {
+        _valueNotifier.value = controller.value;
+        widget.onChanged!(controller.value);
+      };
       controller.addListener(_listener);
     }
   }
@@ -147,6 +157,8 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
     } else {
       controller.removeListener(_listener);
     }
+    _valueNotifier.dispose();
+    _multiValueNotifier.dispose();
     super.dispose();
   }
 
@@ -188,7 +200,7 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
     return DropdownButtonFormField<T>(
       initialValue: currentValue,
       hint: _createHintText(),
-      items: _createMenuItems(),
+      items: _createLegacyMenuItems(),
       elevation: widget.elevation.toInt(),
       onChanged: widget.disabled ? null : (value) => controller.value = value,
       icon: widget.icon,
@@ -216,9 +228,23 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
     return ValueKey('$widgetKey ${widget.options.indexOf(option)}');
   }
 
-  List<DropdownMenuItem<T>> _createMenuItems() => widget.options
+  List<DropdownMenuItem<T>> _createLegacyMenuItems() =>
+      widget.options.map(
+        (option) {
+          return DropdownMenuItem<T>(
+            key: widget.optionsHasValueKeys ? _getItemKey(option) : null,
+            value: option,
+            child: Padding(
+              padding: _useDropdown2() ? horizontalMargin : EdgeInsets.zero,
+              child: Text(optionLabels[option] ?? '', style: widget.textStyle),
+            ),
+          );
+        },
+      ).toList();
+
+  List<DropdownItem<T>> _createMenuItems() => widget.options
       .map(
-        (option) => DropdownMenuItem<T>(
+        (option) => DropdownItem<T>(
             key: widget.optionsHasValueKeys ? _getItemKey(option) : null,
             value: option,
             child: Padding(
@@ -228,13 +254,14 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
       )
       .toList();
 
-  List<DropdownMenuItem<T>> _createMultiselectMenuItems() => widget.options
+  List<DropdownItem<T>> _createMultiselectMenuItems() => widget.options
       .map(
-        (item) => DropdownMenuItem<T>(
+        (item) => DropdownItem<T>(
           key: widget.optionsHasValueKeys ? _getItemKey(item) : null,
           value: item,
           // Disable default onTap to avoid closing menu when selecting an item
           enabled: false,
+          closeOnTap: false,
           child: StatefulBuilder(
             builder: (context, menuSetState) {
               final isSelected =
@@ -283,7 +310,8 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
         ? IconStyleData(icon: widget.icon!)
         : const IconStyleData();
     return DropdownButton2<T>(
-      value: currentValue,
+      valueListenable: isMultiSelect ? null : _valueNotifier,
+      multiValueListenable: isMultiSelect ? _multiValueNotifier : null,
       hint: _createHintText(),
       items: isMultiSelect ? _createMultiselectMenuItems() : _createMenuItems(),
       iconStyleData: iconStyleData,
@@ -309,7 +337,12 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
       ),
       onChanged: widget.disabled
           ? null
-          : (isMultiSelect ? (_) {} : (val) => widget.controller!.value = val),
+          : (isMultiSelect
+              ? (_) {}
+              : (val) {
+                  widget.controller!.value = val;
+                  _valueNotifier.value = val;
+                }),
       isExpanded: true,
       selectedItemBuilder: (context) => widget.options
           .map(
@@ -330,8 +363,8 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
       dropdownSearchData: widget.isSearchable
           ? DropdownSearchData<T>(
               searchController: _textEditingController,
-              searchInnerWidgetHeight: 50,
-              searchInnerWidget: Container(
+              searchBarWidgetHeight: 50,
+              searchBarWidget: Container(
                 height: 50,
                 padding: const EdgeInsets.only(
                   top: 8,

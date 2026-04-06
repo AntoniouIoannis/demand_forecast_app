@@ -2,7 +2,6 @@
 export '/pages/section_authentication/auth2/auth2_widget.dart' show Auth2Widget;
 export '/pages/section_authentication/welcome/welcome_widget.dart'
     show WelcomeWidget;
-export '/pages/tips/tips_widget.dart' show TipsWidget;
 export '/pages/section_demostration_app/demostration_app/demostration_app_widget.dart'
     show DemostrationAppWidget;
 export '/pages/section_subscriptions/subscript/subscript_widget.dart'
