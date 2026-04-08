@@ -1,0 +1,61 @@
+name: Build Flutter macOS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate macOS platform files
+        run: flutter create --platforms=macos .
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd macos
+          pod install --repo-update
+
+      - name: Build macOS app
+        run: flutter build macos --release
+        env:
+          CODE_SIGN_IDENTITY: ""
+          CODE_SIGNING_REQUIRED: "NO"
+          CODE_SIGNING_ALLOWED: "NO"
+
+      - name: Package as DMG
+        run: |
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: No .app bundle found in build output."
+            exit 1
+          fi
+          hdiutil create \
+            -volname "Demand Forecast App" \
+            -srcfolder "$APP_PATH" \
+            -ov -format UDZO \
+            build/DemandForecastApp.dmg
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: build/DemandForecastApp.dmg
