@@ -77,12 +77,15 @@ class _MyAppState extends State<MyApp> {
     userStream = demandForecastAppFirebaseUserStream()
       ..listen((user) {
         _appStateNotifier.update(user);
+        // Stop splash as soon as the first auth event arrives.
+        _appStateNotifier.stopShowingSplashImage();
       });
     jwtTokenStream.listen((_) {});
-    // Avoid getting stuck on the splash overlay on web by stopping it
-    // right after the first frame renders.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _appStateNotifier.stopShowingSplashImage(),
+    // Fallback: stop splash after 3 s in case auth stream never emits
+    // (e.g. no network on web, Firebase init timeout).
+    Future.delayed(
+      const Duration(milliseconds: 3000),
+      () => _appStateNotifier.stopShowingSplashImage(),
     );
   }
 

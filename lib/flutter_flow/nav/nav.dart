@@ -68,6 +68,7 @@ class AppStateNotifier extends ChangeNotifier {
   }
 
   void stopShowingSplashImage() {
+    if (!showSplashImage) return;
     showSplashImage = false;
     notifyListeners();
   }
