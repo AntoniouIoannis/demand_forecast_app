@@ -1,8 +1,16 @@
 {
   "version": "0.2.0",
   "configurations": [
+    
     {
       "name": "Flutter",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "demand_forecast_app (Flutter Edge)",
+      "program": "lib/main.dart",
+      "deviceId": "edge",
       "request": "launch",
       "type": "dart"
     }

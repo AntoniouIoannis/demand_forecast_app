@@ -79,9 +79,10 @@ class _MyAppState extends State<MyApp> {
         _appStateNotifier.update(user);
       });
     jwtTokenStream.listen((_) {});
-    Future.delayed(
-      Duration(milliseconds: 3000),
-      () => _appStateNotifier.stopShowingSplashImage(),
+    // Avoid getting stuck on the splash overlay on web by stopping it
+    // right after the first frame renders.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _appStateNotifier.stopShowingSplashImage(),
     );
   }
 
