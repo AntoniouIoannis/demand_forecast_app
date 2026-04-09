@@ -1,0 +1,29 @@
+Resolving dependencies...
+Downloading packages...
+  archive 3.6.1 (4.0.9 available)
+  flutter_native_splash 2.4.4 (2.4.7 available)
+  googleapis_auth 2.0.0 (2.2.1 available)
+! http 1.4.0 (overridden) (1.6.0 available)
+  image 4.3.0 (4.8.0 available)
+  meta 1.17.0 (1.18.2 available)
+  test_api 0.7.10 (0.7.11 available)
+! uuid 4.5.3 (overridden)
+  vector_math 2.2.0 (2.3.0 available)
+  win32 5.15.0 (6.0.0 available)
+  win32_registry 2.1.0 (3.0.2 available)
+Got dependencies!
+10 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing demand_forecast_app...                                
+
+  error - The named parameter 'value' isn't defined - lib\flutter_flow\flutter_flow_drop_down.dart:286:7 - undefined_named_parameter
+  error - The argument type 'List<DropdownMenuItem<T>>' can't be assigned to the parameter type 'List<DropdownItem<T>>?'.  - lib\flutter_flow\flutter_flow_drop_down.dart:288:14 - argument_type_not_assignable
+  error - The named parameter 'searchInnerWidgetHeight' isn't defined - lib\flutter_flow\flutter_flow_drop_down.dart:333:15 - undefined_named_parameter
+  error - The named parameter 'searchInnerWidget' isn't defined - lib\flutter_flow\flutter_flow_drop_down.dart:334:15 - undefined_named_parameter
+  error - The argument type 'IconData?' can't be assigned to the parameter type 'FaIconData?'.  - lib\flutter_flow\flutter_flow_icon_button.dart:67:9 - argument_type_not_assignable
+  error - The argument type 'IconData' can't be assigned to the parameter type 'FaIconData?'.  - lib\flutter_flow\flutter_flow_widgets.dart:215:13 - argument_type_not_assignable
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\pages\section_import_data\forecast_results\forecast_results_widget.dart:122:11 - deprecated_member_use
+   info - 'shareXFiles' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\pages\section_import_data\forecast_results\forecast_results_widget.dart:122:17 - deprecated_member_use
+  error - The getter 'platform' isn't defined for the type 'FilePicker' - lib\pages\section_import_data\tabimportdata\tabimportdata_widget.dart:105:37 - undefined_getter
+
+9 issues found. (ran in 1.7s)
