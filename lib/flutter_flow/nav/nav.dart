@@ -101,11 +101,6 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
               ),
             ),
             FFRoute(
-              name: TipsWidget.routeName,
-              path: TipsWidget.routePath,
-              builder: (context, params) => TipsWidget(),
-            ),
-            FFRoute(
               name: DemostrationAppWidget.routeName,
               path: DemostrationAppWidget.routePath,
               builder: (context, params) => DemostrationAppWidget(),

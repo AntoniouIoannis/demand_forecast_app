@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 Future initFirebase() async {
-  if (kIsWeb || defaultTargetPlatform == TargetPlatform.windows) {
+  if (kIsWeb ||
+      defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
     await Firebase.initializeApp(
         options: FirebaseOptions(
             apiKey: "AIzaSyBq1A9mmXd5loG0ysU1dAg1gDDRu51mO6k",

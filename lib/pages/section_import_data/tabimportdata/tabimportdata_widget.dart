@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import '/backend/forecast/forecast_config.dart';
 import '/backend/forecast/forecast_models.dart';
+import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
@@ -11,7 +12,7 @@ import '/pages/section_import_data/forecast_processing/forecast_processing_widge
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:excel/excel.dart' as xls;
-import 'package:file_picker/file_picker.dart';
+import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
@@ -38,7 +39,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
 
   late TabimportdataModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  final Map<String, PlatformFile?> _filesBySlot = {
+  final Map<String, fp.PlatformFile?> _filesBySlot = {
     'file_slot_1': null,
     'file_slot_2': null,
     'file_slot_3': null,
@@ -102,8 +103,13 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   }
 
   Future<void> _pickFileForSlot(String slot) async {
+<<<<<<< HEAD
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
+=======
+    final result = await fp.FilePicker.pickFiles(
+      type: fp.FileType.custom,
+>>>>>>> b92751a4cf3a231030ccd6a0af4949f66f56dd4c
       allowedExtensions: _allowedExtensions,
       withData: true,
       allowMultiple: false,
@@ -336,7 +342,7 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   }
 
   ForecastInputFile _prepareMappedFile(
-      int fileIndex, PlatformFile selectedFile) {
+      int fileIndex, fp.PlatformFile selectedFile) {
     final bytes = selectedFile.bytes;
     if (bytes == null || bytes.isEmpty) {
       throw const FormatException('Selected file is empty.');
@@ -779,6 +785,20 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         appBar: AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primary,
           automaticallyImplyLeading: false,
+          leading: FlutterFlowIconButton(
+            borderColor: Colors.transparent,
+            borderRadius: 30.0,
+            borderWidth: 1.0,
+            buttonSize: 60.0,
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: Colors.white,
+              size: 30.0,
+            ),
+            onPressed: () async {
+              context.safePop();
+            },
+          ),
           title: Text(
             'Import Data',
             style: FlutterFlowTheme.of(context).headlineMedium.override(
