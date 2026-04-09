@@ -119,16 +119,18 @@ class _ForecastResultsWidgetState extends State<ForecastResultsWidget> {
     }
 
     final csvBytes = Uint8List.fromList(utf8.encode(buffer.toString()));
-    await Share.shareXFiles(
-      [
-        XFile.fromData(
-          csvBytes,
-          mimeType: 'text/csv',
-          name: 'forecast_results.csv',
-        ),
-      ],
-      text: 'Forecast results export',
-      subject: 'forecast_results.csv',
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [
+          XFile.fromData(
+            csvBytes,
+            mimeType: 'text/csv',
+            name: 'forecast_results.csv',
+          ),
+        ],
+        text: 'Forecast results export',
+        subject: 'forecast_results.csv',
+      ),
     );
   }
 

@@ -57,7 +57,7 @@ class _MyAppState extends State<MyApp> {
     final RouteMatch? lastMatch =
         routeMatch ?? _router.routerDelegate.currentConfiguration.last;
     final RouteMatchList matchList = lastMatch is ImperativeRouteMatch
-        ? (lastMatch as ImperativeRouteMatch).matches
+        ? (lastMatch).matches
         : _router.routerDelegate.currentConfiguration;
     return matchList.uri.toString();
   }
