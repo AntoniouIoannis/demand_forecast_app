@@ -103,13 +103,8 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
   }
 
   Future<void> _pickFileForSlot(String slot) async {
-<<<<<<< HEAD
-    final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-=======
     final result = await fp.FilePicker.pickFiles(
       type: fp.FileType.custom,
->>>>>>> b92751a4cf3a231030ccd6a0af4949f66f56dd4c
       allowedExtensions: _allowedExtensions,
       withData: true,
       allowMultiple: false,

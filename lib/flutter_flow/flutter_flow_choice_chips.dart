@@ -129,15 +129,9 @@ class _FlutterFlowChoiceChipsState extends State<FlutterFlowChoiceChips> {
               overflow: TextOverflow.ellipsis,
             ),
             labelPadding: style.labelPadding,
-<<<<<<< HEAD
-            avatar: option.iconData != null
-                ? Icon(
-                    option.iconData,
-=======
             avatar: iconData != null
                 ? FaIcon(
                     iconData,
->>>>>>> b92751a4cf3a231030ccd6a0af4949f66f56dd4c
                     size: style.iconSize,
                     color: style.iconColor,
                   )
