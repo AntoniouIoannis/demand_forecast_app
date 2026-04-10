@@ -6,12 +6,16 @@ Exposes endpoints to upload sales data and generate forecasts.
 # pylint: disable=broad-exception-caught,import-error
 
 import base64
+import datetime
 import json
 import logging
 import os
 import tempfile
+import urllib.request as url_request
 
+import firebase_admin
 import pandas as pd
+from firebase_admin import auth as firebase_auth
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from forecast_engine import run_optimized_forecast
@@ -56,6 +60,12 @@ CORS(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize Firebase Admin for ID-token verification (uses ADC on Cloud Run).
+try:
+    firebase_admin.get_app()
+except ValueError:
+    firebase_admin.initialize_app()
+
 # Initialize local holiday database.
 init_holidays_db(logger)
 
@@ -67,6 +77,99 @@ except Exception as e:
     logger.warning("Could not initialize GCP clients: %s", e)
     STORAGE_CLIENT = None
     DB = None
+
+
+def _get_gcs_signing_info():
+    """Fetch service-account email and OAuth2 access token from the
+    GCE/Cloud Run metadata server.  Returns (email, token) or (None, None)."""
+    _meta = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default"
+    _headers = {"Metadata-Flavor": "Google"}
+    try:
+        req_email = url_request.Request(f"{_meta}/email", headers=_headers)
+        sa_email = url_request.urlopen(req_email, timeout=3).read().decode("utf-8")
+        req_token = url_request.Request(f"{_meta}/token", headers=_headers)
+        token_data = json.loads(url_request.urlopen(req_token, timeout=3).read().decode("utf-8"))
+        return sa_email, token_data["access_token"]
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.warning("Could not retrieve signing info from metadata server: %s", exc)
+        return None, None
+
+
+def _verify_firebase_token(req):
+    """Verify a Firebase ID token from the Authorization header.
+    Returns the decoded uid, or raises ValueError."""
+    auth_header = req.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise ValueError("Missing or invalid Authorization header")
+    id_token = auth_header[7:]
+    decoded = firebase_auth.verify_id_token(id_token)
+    return decoded["uid"]
+
+
+@app.route("/upload/signed-url", methods=["POST"])
+def generate_upload_signed_url():
+    """Return a GCS Signed URL (v4 PUT) so the client can upload directly to
+    Cloud Storage without routing bytes through Cloud Run.
+
+    Expected JSON body:
+        userId      – Firebase UID of the authenticated user
+        uploadId    – UUID identifying this upload session
+        fileName    – target file name (e.g. "mapped_1.xlsx" or "READY.json")
+        uploadPath  – GCS path prefix: "staging" or "ready"
+        contentType – MIME type of the file being uploaded
+
+    Requires: Authorization: Bearer <firebase_id_token>
+    """
+    if not STORAGE_CLIENT:
+        return jsonify({"error": "Storage client not initialised"}), 503
+
+    # --- auth ---
+    try:
+        token_uid = _verify_firebase_token(request)
+    except Exception as exc:
+        logger.warning("Token verification failed: %s", exc)
+        return jsonify({"error": "Unauthorized"}), 401
+
+    body = request.get_json(silent=True) or {}
+    user_id = (body.get("userId") or "").strip()
+    upload_id = (body.get("uploadId") or "").strip()
+    file_name = (body.get("fileName") or "").strip()
+    upload_path = (body.get("uploadPath") or "staging").strip()
+    content_type = (body.get("contentType") or "application/octet-stream").strip()
+
+    # Caller may only upload to their own folder.
+    if token_uid != user_id:
+        return jsonify({"error": "Forbidden"}), 403
+
+    if not all([user_id, upload_id, file_name]):
+        return jsonify({"error": "Missing required fields: userId, uploadId, fileName"}), 400
+
+    # Sanitise the file name – reject path traversal attempts.
+    if "/" in file_name or ".." in file_name:
+        return jsonify({"error": "Invalid fileName"}), 400
+
+    bucket_name = os.environ.get("STAGING_BUCKET", "demand-forecast-ian.firebasestorage.app")
+    blob_path = f"{upload_path}/{user_id}/{upload_id}/{file_name}"
+
+    try:
+        sa_email, access_token = _get_gcs_signing_info()
+        if not sa_email or not access_token:
+            return jsonify({"error": "Cannot generate signed URL in this environment"}), 500
+
+        bucket = STORAGE_CLIENT.bucket(bucket_name)
+        blob = bucket.blob(blob_path)
+        signed_url = blob.generate_signed_url(
+            version="v4",
+            expiration=datetime.timedelta(minutes=15),
+            method="PUT",
+            content_type=content_type,
+            service_account_email=sa_email,
+            access_token=access_token,
+        )
+        return jsonify({"signedUrl": signed_url, "gcsPath": f"gs://{bucket_name}/{blob_path}"}), 200
+    except Exception as exc:
+        logger.error("Failed to generate signed URL for %s/%s: %s", upload_id, file_name, exc)
+        return jsonify({"error": "Failed to generate signed URL"}), 500
 
 
 @app.route("/", methods=["GET"])
