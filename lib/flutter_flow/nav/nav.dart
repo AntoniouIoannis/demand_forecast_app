@@ -79,12 +79,12 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) => DashboardWidget(),
+      errorBuilder: (context, state) => NavBarPage(initialPage: 'Dashboard'),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => DashboardWidget(),
+          builder: (context, _) => NavBarPage(initialPage: 'Dashboard'),
           routes: [
             FFRoute(
               name: WelcomeWidget.routeName,
@@ -262,7 +262,9 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
             FFRoute(
               name: DashboardWidget.routeName,
               path: DashboardWidget.routePath,
-              builder: (context, params) => DashboardWidget(),
+              builder: (context, params) => params.isEmpty
+                  ? NavBarPage(initialPage: 'Dashboard')
+                  : DashboardWidget(),
             ),
             FFRoute(
               name: ExchangesWidget.routeName,
