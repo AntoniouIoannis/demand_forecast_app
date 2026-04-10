@@ -64,5 +64,6 @@
   "cmake.sourceDirectory": "${workspaceFolder}/windows",
   "cmake.generator": "Ninja",
   "cmakeIntelliSence.cmakePath": "C:\\Program Files\\CMake\\bin\\cmake.exe",
-  "dart.flutterSdkPath": "C:\\Users\\iantoniou\\develop\\flutter"
+  "dart.flutterSdkPath": "C:\\Users\\iantoniou\\develop\\flutter",
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

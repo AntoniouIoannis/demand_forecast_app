@@ -64,7 +64,7 @@ class FFButtonWidget extends StatefulWidget {
 
   final String text;
   final Widget? icon;
-  final FaIconData? iconData;
+  final IconData? iconData;
   final Function()? onPressed;
   final FFButtonOptions options;
   final bool showLoadingIndicator;

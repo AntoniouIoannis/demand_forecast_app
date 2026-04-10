@@ -228,7 +228,8 @@ class _FlutterFlowDropDownState<T> extends State<FlutterFlowDropDown<T>> {
     return ValueKey('$widgetKey ${widget.options.indexOf(option)}');
   }
 
-  List<DropdownMenuItem<T>> _createLegacyMenuItems() => widget.options.map(
+  List<DropdownMenuItem<T>> _createLegacyMenuItems() =>
+      widget.options.map(
         (option) {
           return DropdownMenuItem<T>(
             key: widget.optionsHasValueKeys ? _getItemKey(option) : null,
