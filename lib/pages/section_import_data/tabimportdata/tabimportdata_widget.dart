@@ -9,8 +9,9 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/pages/section_authentication/auth2/auth2_widget.dart';
 import '/pages/section_import_data/forecast_processing/forecast_processing_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show FieldValue;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:excel/excel.dart' as xls;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/material.dart';
@@ -202,7 +203,12 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         'Country=$countryCode | Market=$selectedMarket',
       );
 
-      final storage = FirebaseStorage.instance;
+      // Obtain a Firebase ID token used to authenticate signed-URL requests.
+      final idToken = await user.getIdToken();
+      if (idToken == null) {
+        throw const FormatException('Could not get authentication token.');
+      }
+
       final selectedEntries = _filesBySlot.entries
           .where((entry) => entry.value?.bytes != null)
           .toList(growable: false);
@@ -234,20 +240,22 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         final mappedFile = _prepareMappedFile(i + 1, selected);
 
         final filePath = 'staging/$userId/$uploadId/${mappedFile.fileName}';
-        final ref = storage.ref().child(filePath);
 
-        final metadata = SettableMetadata(
-          contentType:
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          customMetadata: {
-            'slotKey': slotKey,
-            'originalName': selected.name,
-            'uploadId': uploadId,
-            'mapped': 'true',
-          },
+        const fileContentType =
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        final signedUrl = await _requestSignedUrl(
+          idToken: idToken,
+          userId: userId,
+          uploadId: uploadId,
+          fileName: mappedFile.fileName,
+          uploadPath: 'staging',
+          contentType: fileContentType,
         );
-
-        await ref.putData(Uint8List.fromList(mappedFile.bytes), metadata);
+        await _uploadWithSignedUrl(
+          signedUrl: signedUrl,
+          bytes: Uint8List.fromList(mappedFile.bytes),
+          contentType: fileContentType,
+        );
         filesUploaded++;
         await _debugCheckpoint(
           'Upload Success',
@@ -273,22 +281,43 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
         'mapped': true,
         'expectedColumns': const ['shipped', 'product_id', 'ordered_qty'],
       });
-      final readyRef =
-          storage.ref().child('ready/$userId/$uploadId/READY.json');
-      await readyRef.putData(
-        Uint8List.fromList(utf8.encode(readyPayload)),
-        SettableMetadata(
-          contentType: 'application/json',
-          customMetadata: {
-            'uploadId': uploadId,
-            'mapped': 'true',
-          },
-        ),
+      const readyContentType = 'application/json';
+      final readySignedUrl = await _requestSignedUrl(
+        idToken: idToken,
+        userId: userId,
+        uploadId: uploadId,
+        fileName: 'READY.json',
+        uploadPath: 'ready',
+        contentType: readyContentType,
+      );
+      await _uploadWithSignedUrl(
+        signedUrl: readySignedUrl,
+        bytes: Uint8List.fromList(utf8.encode(readyPayload)),
+        contentType: readyContentType,
       );
       await _debugCheckpoint(
         'READY.json Uploaded',
         'Forecast trigger file uploaded successfully. filesUploaded=$filesUploaded',
       );
+
+      // Save upload metadata to Firestore (only lightweight fields, no file bytes).
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('upload-files')
+          .doc(uploadId)
+          .set({
+        'userId': userId,
+        'uploadId': uploadId,
+        'gcsPath': 'staging/$userId/$uploadId',
+        'files': uploadedFiles,
+        'filesCount': filesUploaded,
+        'country_code': countryCode,
+        'market': selectedMarket,
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'uploaded',
+      });
+      _appendDebugLog('Upload metadata saved to Firestore');
 
       if (mounted) {
         _appendDebugLog('Opening Forecast Processing page');
@@ -333,6 +362,56 @@ class _TabimportdataWidgetState extends State<TabimportdataWidget> {
           _isSubmitting = false;
         });
       }
+    }
+  }
+
+  /// Calls the backend to obtain a GCS v4 Signed URL for a PUT upload.
+  Future<String> _requestSignedUrl({
+    required String idToken,
+    required String userId,
+    required String uploadId,
+    required String fileName,
+    required String uploadPath,
+    required String contentType,
+  }) async {
+    final uri = Uri.parse(
+        '${ForecastConfig.cloudRunBaseUrl}/upload/signed-url');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $idToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'uploadId': uploadId,
+        'fileName': fileName,
+        'uploadPath': uploadPath,
+        'contentType': contentType,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw FormatException(
+          'Failed to get signed URL (${response.statusCode}): ${response.body}');
+    }
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return data['signedUrl'] as String;
+  }
+
+  /// Uploads [bytes] directly to GCS using a pre-obtained [signedUrl].
+  Future<void> _uploadWithSignedUrl({
+    required String signedUrl,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    final response = await http.put(
+      Uri.parse(signedUrl),
+      headers: {'Content-Type': contentType},
+      body: bytes,
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FormatException(
+          'GCS upload failed (${response.statusCode}): ${response.body}');
     }
   }
 
