@@ -30,7 +30,6 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
-  // This widget is the root of your application.
   @override
   State<MyApp> createState() => _MyAppState();
 
@@ -132,11 +131,11 @@ class _MyAppState extends State<MyApp> {
 
 class NavBarPage extends StatefulWidget {
   NavBarPage({
-    Key? key,
+    super.key,
     this.initialPage,
     this.page,
     this.disableResizeToAvoidBottomInset = false,
-  }) : super(key: key);
+  });
 
   final String? initialPage;
   final Widget? page;
@@ -146,7 +145,6 @@ class NavBarPage extends StatefulWidget {
   _NavBarPageState createState() => _NavBarPageState();
 }
 
-/// This is the private State class that goes with NavBarPage.
 class _NavBarPageState extends State<NavBarPage> {
   String _currentPageName = 'Dashboard';
   late Widget? _currentPage;
@@ -174,82 +172,76 @@ class _NavBarPageState extends State<NavBarPage> {
     return Scaffold(
       resizeToAvoidBottomInset: !widget.disableResizeToAvoidBottomInset,
       body: _currentPage ?? tabs[_currentPageName],
-      bottomNavigationBar: Visibility(
-        visible: responsiveVisibility(
-          context: context,
-          desktop: false,
-        ),
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (i) => safeSetState(() {
-            _currentPage = null;
-            _currentPageName = tabs.keys.toList()[i];
-          }),
-          backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-          selectedItemColor: FlutterFlowTheme.of(context).primary,
-          unselectedItemColor: FlutterFlowTheme.of(context).secondaryText,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          type: BottomNavigationBarType.fixed,
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.dashboard_outlined,
-                size: 24.0,
-              ),
-              label: 'Dashboard',
-              tooltip: '',
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (i) => safeSetState(() {
+          _currentPage = null;
+          _currentPageName = tabs.keys.toList()[i];
+        }),
+        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+        selectedItemColor: FlutterFlowTheme.of(context).primary,
+        unselectedItemColor: FlutterFlowTheme.of(context).secondaryText,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        type: BottomNavigationBarType.fixed,
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.dashboard_outlined,
+              size: 24.0,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.person_outline,
-                size: 24.0,
-              ),
-              label: 'Account',
-              tooltip: '',
+            label: 'Dashboard',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.person_outline,
+              size: 24.0,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.card_membership_outlined,
-                size: 24.0,
-              ),
-              label: 'Subscriptions',
-              tooltip: '',
+            label: 'Account',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.card_membership_outlined,
+              size: 24.0,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.info_outline,
-                size: 24.0,
-              ),
-              label: 'About',
-              tooltip: '',
+            label: 'Subscriptions',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.info_outline,
+              size: 24.0,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.upload_file_outlined,
-                size: 24.0,
-              ),
-              label: 'Import',
-              tooltip: '',
+            label: 'About',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.upload_file_outlined,
+              size: 24.0,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.calendar_month_outlined,
-                size: 24.0,
-              ),
-              label: 'Calendar',
-              tooltip: '',
+            label: 'Import',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.calendar_month_outlined,
+              size: 24.0,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.home_outlined,
-                size: 24.0,
-              ),
-              label: 'Home',
-              tooltip: '',
-            )
-          ],
-        ),
+            label: 'Calendar',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.home_outlined,
+              size: 24.0,
+            ),
+            label: 'Home',
+            tooltip: '',
+          )
+        ],
       ),
     );
   }
