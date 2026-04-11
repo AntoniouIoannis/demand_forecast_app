@@ -1,4 +1,5 @@
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -80,12 +81,6 @@ class _MyAppState extends State<MyApp> {
         _appStateNotifier.stopShowingSplashImage();
       });
     jwtTokenStream.listen((_) {});
-    // Fallback: stop splash after 3 s in case auth stream never emits
-    // (e.g. no network on web, Firebase init timeout).
-    Future.delayed(
-      const Duration(milliseconds: 3000),
-      () => _appStateNotifier.stopShowingSplashImage(),
-    );
   }
 
   void setLocale(String language) {
@@ -162,87 +157,56 @@ class _NavBarPageState extends State<NavBarPage> {
       'Dashboard': DashboardWidget(),
       'Auth2': Auth2Widget(),
       'subscript': SubscriptWidget(),
-      'AboutApp': AboutAppWidget(),
       'importData': TabimportdataWidget(),
-      'Calendar': CalendarWidget(),
-      'HomePage': HomePageWidget(),
+      'Radar': RadarWidget(),
     };
     final currentIndex = tabs.keys.toList().indexOf(_currentPageName);
 
     return Scaffold(
       resizeToAvoidBottomInset: !widget.disableResizeToAvoidBottomInset,
       body: _currentPage ?? tabs[_currentPageName],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (i) => safeSetState(() {
-          _currentPage = null;
-          _currentPageName = tabs.keys.toList()[i];
-        }),
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        selectedItemColor: FlutterFlowTheme.of(context).primary,
-        unselectedItemColor: FlutterFlowTheme.of(context).secondaryText,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        type: BottomNavigationBarType.fixed,
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.dashboard_outlined,
-              size: 24.0,
+      bottomNavigationBar: kIsWeb
+          ? null
+          : BottomNavigationBar(
+              currentIndex: currentIndex < 0 ? 0 : currentIndex,
+              onTap: (i) => safeSetState(() {
+                _currentPage = null;
+                _currentPageName = tabs.keys.toList()[i];
+              }),
+              backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+              selectedItemColor: FlutterFlowTheme.of(context).primary,
+              unselectedItemColor: FlutterFlowTheme.of(context).secondaryText,
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
+              type: BottomNavigationBarType.fixed,
+              items: <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard_outlined, size: 24.0),
+                  label: 'Dashboard',
+                  tooltip: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline, size: 24.0),
+                  label: 'Account',
+                  tooltip: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.card_membership_outlined, size: 24.0),
+                  label: 'Subscriptions',
+                  tooltip: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.upload_file_outlined, size: 24.0),
+                  label: 'Import',
+                  tooltip: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.radar_outlined, size: 24.0),
+                  label: 'Radar',
+                  tooltip: '',
+                ),
+              ],
             ),
-            label: 'Dashboard',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.person_outline,
-              size: 24.0,
-            ),
-            label: 'Account',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.card_membership_outlined,
-              size: 24.0,
-            ),
-            label: 'Subscriptions',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.info_outline,
-              size: 24.0,
-            ),
-            label: 'About',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.upload_file_outlined,
-              size: 24.0,
-            ),
-            label: 'Import',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.calendar_month_outlined,
-              size: 24.0,
-            ),
-            label: 'Calendar',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.home_outlined,
-              size: 24.0,
-            ),
-            label: 'Home',
-            tooltip: '',
-          )
-        ],
-      ),
     );
   }
 }
