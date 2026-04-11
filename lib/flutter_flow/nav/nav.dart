@@ -27,7 +27,7 @@ class AppStateNotifier extends ChangeNotifier {
 
   BaseAuthUser? initialUser;
   BaseAuthUser? user;
-  bool showSplashImage = true;
+  bool showSplashImage = false;
   String? _redirectLocation;
 
   /// Determines whether the app will refresh and build again when a sign
@@ -60,7 +60,7 @@ class AppStateNotifier extends ChangeNotifier {
     // Refresh the app on auth change unless explicitly marked otherwise.
     // No need to update unless the user has changed.
     if (notifyOnAuthChange && shouldUpdate) {
-      notifyListeners();
+      _safeNotify();
     }
     // Once again mark the notifier as needing to update on auth change
     // (in order to catch sign in / out events).
@@ -70,25 +70,29 @@ class AppStateNotifier extends ChangeNotifier {
   void stopShowingSplashImage() {
     if (!showSplashImage) return;
     showSplashImage = false;
-    notifyListeners();
+    _safeNotify();
+  }
+
+  /// Calls notifyListeners safely — deferred via microtask to avoid
+  /// Flutter Web assertion errors when called during a frame.
+  void _safeNotify() {
+    Future.microtask(() {
+      if (hasListeners) notifyListeners();
+    });
   }
 }
 
 GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
-      initialLocation: '/',
+      initialLocation: '/dashboard',
       debugLogDiagnostics: true,
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
-      errorBuilder: (context, state) => appStateNotifier.loggedIn
-          ? NavBarPage(initialPage: 'Dashboard')
-          : Auth2Widget(),
+      errorBuilder: (context, state) => NavBarPage(initialPage: 'Dashboard'),
       routes: [
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => appStateNotifier.loggedIn
-              ? NavBarPage(initialPage: 'Dashboard')
-              : Auth2Widget(),
+          builder: (context, _) => NavBarPage(initialPage: 'Dashboard'),
           routes: [
             FFRoute(
               name: WelcomeWidget.routeName,
