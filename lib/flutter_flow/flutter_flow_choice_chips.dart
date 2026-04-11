@@ -2,13 +2,12 @@ import 'form_field_controller.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 
 class ChipData {
   const ChipData(this.label, [this.iconData]);
   final String label;
-  final FaIconData? iconData;
+  final IconData? iconData;
 }
 
 class ChipStyle {
@@ -96,7 +95,6 @@ class _FlutterFlowChoiceChipsState extends State<FlutterFlowChoiceChips> {
   Widget build(BuildContext context) {
     final children = widget.options.map<Widget>(
       (option) {
-        final iconData = option.iconData;
         final selected = selectedValues.contains(option.label);
         final style =
             selected ? widget.selectedChipStyle : widget.unselectedChipStyle;
@@ -129,9 +127,9 @@ class _FlutterFlowChoiceChipsState extends State<FlutterFlowChoiceChips> {
               overflow: TextOverflow.ellipsis,
             ),
             labelPadding: style.labelPadding,
-            avatar: iconData != null
-                ? FaIcon(
-                    iconData,
+            avatar: option.iconData != null
+                ? Icon(
+                    option.iconData,
                     size: style.iconSize,
                     color: style.iconColor,
                   )
