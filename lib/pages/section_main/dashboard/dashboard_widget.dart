@@ -36,6 +36,29 @@ class _DashboardWidgetState extends State<DashboardWidget> {
     super.dispose();
   }
 
+  Widget _buildGuideStep(BuildContext context, String text, IconData icon) {
+    final theme = FlutterFlowTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: theme.secondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                color: theme.primaryText,
+                fontSize: 14.0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDashboardTile({
     required String label,
     required IconData icon,
@@ -304,6 +327,56 @@ class _DashboardWidgetState extends State<DashboardWidget> {
                           ),
                         ],
                       ),
+                    const SizedBox(height: 20.0),
+                    // Quick Start Guide setup
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.accent1,
+                        borderRadius: BorderRadius.circular(16.0),
+                        border: Border.all(
+                          color: theme.primary,
+                          width: 2.0,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Quick Start Guide',
+                              style: GoogleFonts.interTight(
+                                color: theme.primaryText,
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12.0),
+                            _buildGuideStep(
+                              context,
+                              '1. Upload your historical sales data (CSV, Excel, JSON).',
+                              Icons.upload_file_rounded,
+                            ),
+                            _buildGuideStep(
+                              context,
+                              '2. We\'ll automatically validate and process your data.',
+                              Icons.verified_user_rounded,
+                            ),
+                            _buildGuideStep(
+                              context,
+                              '3. Select your horizon and generate your ML forecast.',
+                              Icons.online_prediction_rounded,
+                            ),
+                            _buildGuideStep(
+                              context,
+                              '4. Download your results as a CSV.',
+                              Icons.download_rounded,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 20.0),
                     // Main layout: Large "Forecast" on left, grid of 4 tiles on right (desktop) / stacked (mobile)
                     if (isDesktop)
