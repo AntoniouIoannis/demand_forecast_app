@@ -173,10 +173,23 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
     if (resolvedUid == null || resolvedUid.isEmpty) return;
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('onhold_users')
+      // First try to fetch from 'users' collection
+      var doc = await FirebaseFirestore.instance
+          .collection('users')
           .doc(resolvedUid)
           .get();
+
+      // Fallback to 'onhold_users' if not found or missing fields
+      if (!doc.exists || (doc.data()?['firstName'] == null)) {
+        final onholdDoc = await FirebaseFirestore.instance
+            .collection('onhold_users')
+            .doc(resolvedUid)
+            .get();
+        if (onholdDoc.exists) {
+          doc = onholdDoc;
+        }
+      }
+
       if (!doc.exists) return;
 
       final data = doc.data() ?? <String, dynamic>{};
@@ -231,6 +244,14 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
     if (uid != null && uid.isNotEmpty) {
       final payload = _currentProfilePayload();
       await _saveProfileToLocal(uid, payload);
+
+      // Save to 'users' collection (Primary)
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(payload, SetOptions(merge: true));
+
+      // Also save to 'onhold_users' for backward compatibility/pipeline reasons
       await FirebaseFirestore.instance
           .collection('onhold_users')
           .doc(uid)
@@ -289,219 +310,308 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'First Name',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          TextFormField(
-            controller: _firstNameController,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: 'Enter first name',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
-            onChanged: (_) => _saveProfile(),
-          ),
-          const SizedBox(height: 12.0),
-          Text(
-            'Last Name',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          TextFormField(
-            controller: _lastNameController,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: 'Enter last name',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
-            onChanged: (_) => _saveProfile(),
-          ),
-          const SizedBox(height: 12.0),
-          Text(
-            'Business Website',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          TextFormField(
-            controller: _websiteController,
-            keyboardType: TextInputType.url,
-            decoration: InputDecoration(
-              hintText: 'https://example.gr',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
-            onChanged: (_) => _saveProfile(),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'First Name',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _firstNameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        hintText: 'Enter first name',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                      onChanged: (_) => _saveProfile(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Last Name',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _lastNameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        hintText: 'Enter last name',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                      onChanged: (_) => _saveProfile(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12.0),
-          Text(
-            'Product Category',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<String>(
-            key: const ValueKey('market_dropdown'),
-            initialValue: _selectedMarket,
-            items: _businessMarkets
-                .map((m) => DropdownMenuItem<String>(value: m, child: Text(m)))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedMarket = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Choose product category',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
-          ),
-          const SizedBox(height: 12.0),
-          Text(
-            'Seasonal Calendar',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<String>(
-            key: const ValueKey('seasonal_calendar_dropdown'),
-            initialValue: _selectedSeasonalCalendar,
-            items: _seasonalCalendars
-                .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedSeasonalCalendar = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Select seasonal calendar',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
-          ),
-          const SizedBox(height: 12.0),
-          Text(
-            'NACE / KAD Focus',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<String>(
-            key: const ValueKey('nace_dropdown'),
-            initialValue: _selectedNaceCode,
-            items: _naceCodes
-                .map((n) => DropdownMenuItem<String>(value: n, child: Text(n)))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedNaceCode = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Select NACE/KAD code',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Business Website',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    TextFormField(
+                      controller: _websiteController,
+                      keyboardType: TextInputType.url,
+                      decoration: InputDecoration(
+                        hintText: 'https://example.gr',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                      onChanged: (_) => _saveProfile(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Product Category',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      key: const ValueKey('market_dropdown'),
+                      initialValue: _selectedMarket,
+                      items: _businessMarkets
+                          .map((m) => DropdownMenuItem<String>(
+                              value: m, child: Text(m)))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedMarket = val);
+                        _onProfileSelectionChanged();
+                      },
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        hintText: 'Choose',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12.0),
-          Text(
-            'Market Country',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<String>(
-            key: const ValueKey('country_dropdown'),
-            initialValue: _selectedCountry,
-            items: _marketCountries
-                .map((c) => DropdownMenuItem<String>(value: c, child: Text(c)))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedCountry = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Choose country',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Seasonal Calendar',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      key: const ValueKey('seasonal_calendar_dropdown'),
+                      initialValue: _selectedSeasonalCalendar,
+                      items: _seasonalCalendars
+                          .map((c) => DropdownMenuItem<String>(
+                              value: c,
+                              child: Text(
+                                c,
+                                overflow: TextOverflow.ellipsis,
+                              )))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedSeasonalCalendar = val);
+                        _onProfileSelectionChanged();
+                      },
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        hintText: 'Select',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'NACE / KAD Focus',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      key: const ValueKey('nace_dropdown'),
+                      initialValue: _selectedNaceCode,
+                      items: _naceCodes
+                          .map((n) => DropdownMenuItem<String>(
+                              value: n,
+                              child: Text(
+                                n,
+                                overflow: TextOverflow.ellipsis,
+                              )))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedNaceCode = val);
+                        _onProfileSelectionChanged();
+                      },
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        hintText: 'Select',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12.0),
-          Text(
-            'Forecast Horizon',
-            style: GoogleFonts.inter(
-                color: theme.secondaryText,
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6.0),
-          DropdownButtonFormField<int>(
-            key: const ValueKey('forecast_horizon_dropdown'),
-            initialValue: _selectedForecastHorizonDays,
-            items: _forecastHorizons
-                .map((d) =>
-                    DropdownMenuItem<int>(value: d, child: Text('$d days')))
-                .toList(),
-            onChanged: (val) {
-              setState(() => _selectedForecastHorizonDays = val);
-              _onProfileSelectionChanged();
-            },
-            decoration: InputDecoration(
-              hintText: 'Select horizon',
-              filled: true,
-              fillColor: theme.primaryBackground,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Market Country',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<String>(
+                      key: const ValueKey('country_dropdown'),
+                      initialValue: _selectedCountry,
+                      items: _marketCountries
+                          .map((c) => DropdownMenuItem<String>(
+                              value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedCountry = val);
+                        _onProfileSelectionChanged();
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Choose',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Forecast Horizon',
+                      style: GoogleFonts.inter(
+                          color: theme.secondaryText,
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6.0),
+                    DropdownButtonFormField<int>(
+                      key: const ValueKey('forecast_horizon_dropdown'),
+                      initialValue: _selectedForecastHorizonDays,
+                      items: _forecastHorizons
+                          .map((d) => DropdownMenuItem<int>(
+                              value: d, child: Text('$d days')))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() => _selectedForecastHorizonDays = val);
+                        _onProfileSelectionChanged();
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Select',
+                        filled: true,
+                        fillColor: theme.primaryBackground,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 10.0),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.0)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14.0),
           Row(
@@ -562,6 +672,7 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
   @override
   Widget build(BuildContext context) {
     final appState = FFAppState();
+    // ignore: unused_local_variable
     final remaining =
         (appState.monthlyTokenLimit - appState.usedTokensThisMonth)
             .clamp(0, 999999);
@@ -675,87 +786,123 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
                 ),
               ),
 
-              const SizedBox(height: 24.0),
-
-              // ─── Subscription ─────────────────────────────────────────
-              _SectionHeader(title: 'Subscription'),
+              // ─── Subscription & JWT ──────────────────────────────────
+              _SectionHeader(title: 'Subscription & Tokens'),
               const SizedBox(height: 12.0),
 
-              _InfoTile(
-                icon: Icons.workspace_premium_outlined,
-                label: 'Plan',
-                value: appState.subscriptionPlan,
-              ),
-              const SizedBox(height: 10.0),
-
-              // Token usage row
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14.0),
-                decoration: BoxDecoration(
-                  color: FlutterFlowTheme.of(context).secondaryBackground,
-                  borderRadius: BorderRadius.circular(12.0),
-                  border: Border.all(
-                    color: FlutterFlowTheme.of(context).alternate,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.token_outlined,
-                            size: 20.0,
-                            color: FlutterFlowTheme.of(context).secondaryText),
-                        const SizedBox(width: 10.0),
-                        Text(
-                          'Tokens',
-                          style: FlutterFlowTheme.of(context)
-                              .labelMedium
-                              .override(letterSpacing: 0.0),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${appState.usedTokensThisMonth} / ${appState.monthlyTokenLimit}',
-                          style:
-                              FlutterFlowTheme.of(context).bodyMedium.override(
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.0,
-                                  ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8.0),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999.0),
-                      child: LinearProgressIndicator(
-                        value: tokenUsageFraction,
-                        minHeight: 7.0,
-                        backgroundColor: FlutterFlowTheme.of(context).alternate,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          tokenUsageFraction >= 0.9
-                              ? Colors.redAccent
-                              : FlutterFlowTheme.of(context).primary,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Plan field
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      padding: const EdgeInsets.all(14.0),
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: FlutterFlowTheme.of(context).alternate,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      '$remaining tokens remaining this month',
-                      style: FlutterFlowTheme.of(context).labelSmall.override(
-                            letterSpacing: 0.0,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.workspace_premium_outlined,
+                                  size: 18.0,
+                                  color: FlutterFlowTheme.of(context)
+                                      .secondaryText),
+                              const SizedBox(width: 8.0),
+                              Text(
+                                'Plan',
+                                style: FlutterFlowTheme.of(context)
+                                    .labelMedium
+                                    .override(letterSpacing: 0.0),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 6.0),
+                          Text(
+                            appState.subscriptionPlan,
+                            style: FlutterFlowTheme.of(context)
+                                .bodyMedium
+                                .override(
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.0,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 10.0),
+                  // Token field
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(14.0),
+                      decoration: BoxDecoration(
+                        color: FlutterFlowTheme.of(context).secondaryBackground,
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: FlutterFlowTheme.of(context).alternate,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.token_outlined,
+                                  size: 18.0,
+                                  color: FlutterFlowTheme.of(context)
+                                      .secondaryText),
+                              const SizedBox(width: 8.0),
+                              Text(
+                                'Usage',
+                                style: FlutterFlowTheme.of(context)
+                                    .labelMedium
+                                    .override(letterSpacing: 0.0),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${appState.usedTokensThisMonth}/${appState.monthlyTokenLimit}',
+                                style: FlutterFlowTheme.of(context)
+                                    .bodySmall
+                                    .override(
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.0,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8.0),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999.0),
+                            child: LinearProgressIndicator(
+                              value: tokenUsageFraction,
+                              minHeight: 5.0,
+                              backgroundColor:
+                                  FlutterFlowTheme.of(context).alternate,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                tokenUsageFraction >= 0.9
+                                    ? Colors.redAccent
+                                    : FlutterFlowTheme.of(context).primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 10.0),
 
-              // ─── JWT Token ────────────────────────────────────────────
-              _SectionHeader(title: 'Session Token (JWT)'),
-              const SizedBox(height: 12.0),
-
+              // JWT Token Container (full width)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14.0),
@@ -766,67 +913,58 @@ class _UserProfileWidgetState extends State<UserProfileWidget> {
                     color: FlutterFlowTheme.of(context).alternate,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.vpn_key_outlined,
-                            size: 20.0,
-                            color: FlutterFlowTheme.of(context).secondaryText),
-                        const SizedBox(width: 10.0),
-                        Expanded(
-                          child: Text(
+                    Icon(Icons.vpn_key_outlined,
+                        size: 18.0,
+                        color: FlutterFlowTheme.of(context).secondaryText),
+                    const SizedBox(width: 10.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Session JWT',
+                            style: FlutterFlowTheme.of(context)
+                                .labelSmall
+                                .override(letterSpacing: 0.0),
+                          ),
+                          Text(
                             _tokenVisible ? currentJwtToken : jwtShort,
                             style:
                                 FlutterFlowTheme.of(context).bodySmall.override(
-                                      font: GoogleFonts.robotoMono(),
+                                      font: GoogleFonts.robotoMono(
+                                        fontSize: 10.0,
+                                      ),
                                       letterSpacing: 0.0,
                                     ),
-                            maxLines: _tokenVisible ? null : 2,
-                            overflow: _tokenVisible
-                                ? TextOverflow.visible
-                                : TextOverflow.ellipsis,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            _tokenVisible
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            size: 20.0,
-                            color: FlutterFlowTheme.of(context).secondaryText,
-                          ),
-                          onPressed: () =>
-                              setState(() => _tokenVisible = !_tokenVisible),
-                          tooltip: _tokenVisible ? 'Hide' : 'Show full token',
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    if (_tokenVisible && currentJwtToken.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              // copy to clipboard
-                              final data = ClipboardData(text: currentJwtToken);
-                              Clipboard.setData(data);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Token copied to clipboard.')),
-                              );
-                            },
-                            icon: const Icon(Icons.copy_outlined, size: 16.0),
-                            label: const Text('Copy'),
-                            style: TextButton.styleFrom(
-                              foregroundColor:
-                                  FlutterFlowTheme.of(context).primary,
-                            ),
-                          ),
-                        ),
+                    IconButton(
+                      icon: Icon(
+                        _tokenVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 18.0,
+                        color: FlutterFlowTheme.of(context).secondaryText,
+                      ),
+                      onPressed: () =>
+                          setState(() => _tokenVisible = !_tokenVisible),
+                    ),
+                    if (currentJwtToken.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.copy_outlined, size: 18.0),
+                        onPressed: () {
+                          Clipboard.setData(
+                              ClipboardData(text: currentJwtToken));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Copied.')),
+                          );
+                        },
                       ),
                   ],
                 ),
