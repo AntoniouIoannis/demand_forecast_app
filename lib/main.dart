@@ -148,7 +148,7 @@ class NavBarPage extends StatefulWidget {
 
 /// This is the private State class that goes with NavBarPage.
 class _NavBarPageState extends State<NavBarPage> {
-  String _currentPageName = 'Auth2';
+  String _currentPageName = 'Dashboard';
   late Widget? _currentPage;
 
   @override
@@ -161,6 +161,7 @@ class _NavBarPageState extends State<NavBarPage> {
   @override
   Widget build(BuildContext context) {
     final tabs = {
+      'Dashboard': DashboardWidget(),
       'Auth2': Auth2Widget(),
       'subscript': SubscriptWidget(),
       'AboutApp': AboutAppWidget(),
@@ -191,6 +192,14 @@ class _NavBarPageState extends State<NavBarPage> {
           showUnselectedLabels: false,
           type: BottomNavigationBarType.fixed,
           items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(
+                Icons.dashboard_outlined,
+                size: 24.0,
+              ),
+              label: 'Dashboard',
+              tooltip: '',
+            ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.person_outline,

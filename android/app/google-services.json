@@ -7,31 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1072203670086:android:a684194bee76b848432047",
-        "android_client_info": {
-          "package_name": "com.mycompany.demandforecastapp"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAK9LMDYHxHUezul2Wuf8wsW861ZVL-WyM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:1072203670086:android:6404ec3eb856f72d432047",
         "android_client_info": {
           "package_name": "gr.iantoniou.demandforecastapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1072203670086-gcod78pd7qcfjulg40o4g202ajej8tms.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "gr.iantoniou.demandforecastapp",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "1072203670086-phhjuoou4ui6djguigefjg93nbeaabap.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAK9LMDYHxHUezul2Wuf8wsW861ZVL-WyM"
@@ -39,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1072203670086-phhjuoou4ui6djguigefjg93nbeaabap.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1072203670086-2om12sdg5l2cnhltj255g1l3q16na2ih.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "gr.iantoniou.demandforecastapp"
+              }
+            }
+          ]
         }
       }
     }
